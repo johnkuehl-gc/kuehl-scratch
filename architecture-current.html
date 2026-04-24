@@ -27,28 +27,42 @@
       gap: 0;
     }
 
-    /* ── Entry point ── */
-    .entry-block {
-      background: #1a1a2e; color: #fff; border-radius: 12px;
-      padding: 16px 48px; font-size: 13px; font-weight: 600;
-      letter-spacing: 0.8px; text-transform: uppercase; text-align: center;
-      box-shadow: 0 4px 20px rgba(26,26,46,0.25);
+    /* ── Home Screen ── */
+    .home-block {
+      background: #1a1a2e; color: #fff; border-radius: 14px;
+      padding: 18px 48px; text-align: center;
+      box-shadow: 0 4px 20px rgba(26,26,46,0.25); width: 100%;
     }
-    .entry-block .label { font-size: 10px; opacity: 0.5; letter-spacing: 1px; margin-bottom: 4px; font-weight: 400; }
+    .home-block .hb-label { font-size: 10px; opacity: 0.5; letter-spacing: 1px; margin-bottom: 5px; font-weight: 400; text-transform: uppercase; }
+    .home-block .hb-name { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .home-block .hb-desc { font-size: 12px; opacity: 0.6; margin-top: 5px; }
+    .home-block .hb-routes { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+    .hb-route { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 5px 14px; font-size: 11px; color: rgba(255,255,255,0.85); }
 
     /* ── Connectors ── */
     .connector-down { width: 2px; height: 28px; background: #c5c9d6; flex-shrink: 0; }
     .connector-center { display: flex; justify-content: center; width: 100%; }
     .connector-up { width: 2px; height: 24px; background: #c5c9d6; }
 
-    /* ── Two-entity peer row ── */
+    /* ── Three-entity peer row ── */
     .entity-row {
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 0;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
       width: 100%;
       align-items: start;
     }
+
+    .hub-athlete {
+      background: #fff; border: 2px dashed #c5c9d6; color: #1a1a2e;
+    }
+    .athlete-col-card {
+      background: #fff; border-radius: 14px; padding: 18px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 2px dashed #c5c9d6; width: 100%;
+    }
+    .athlete-col-card .ac-desc { font-size: 11px; color: #718096; line-height: 1.5; margin-bottom: 10px; }
+    .athlete-col-card .ac-note { font-size: 10.5px; color: #a0aec0; font-style: italic; margin-bottom: 12px; }
 
     .entity-col {
       display: flex;
@@ -254,23 +268,30 @@
 
   <div class="diagram">
 
-    <!-- Entry point -->
-    <div class="entry-block">
-      <div class="label">Account Creation Entry Point</div>
-      Join or Create a Team
+    <!-- Home Screen -->
+    <div class="home-block">
+      <div class="hb-label">Entry Point</div>
+      <div class="hb-name">Home Screen</div>
+      <div class="hb-desc">Your hub for teams, live games, and athlete profiles</div>
+      <div class="hb-routes">
+        <div class="hb-route">Team</div>
+        <div class="hb-route">League / Tournament</div>
+        <div class="hb-route">Athlete Profile</div>
+      </div>
     </div>
 
-    <!-- Fan-out connector to both entities -->
+    <!-- Fan-out connector to three entities -->
     <div style="width:100%; height:36px; position:relative; flex-shrink:0;">
       <svg width="100%" height="36" preserveAspectRatio="none" viewBox="0 0 1020 36" style="display:block;">
         <line x1="510" y1="0" x2="510" y2="18" stroke="#c5c9d6" stroke-width="2"/>
-        <line x1="240" y1="18" x2="780" y2="18" stroke="#c5c9d6" stroke-width="2"/>
-        <line x1="240" y1="18" x2="240" y2="36" stroke="#c5c9d6" stroke-width="2"/>
-        <line x1="780" y1="18" x2="780" y2="36" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="165" y1="18" x2="855" y2="18" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="165" y1="18" x2="165" y2="36" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="510" y1="18" x2="510" y2="36" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="855" y1="18" x2="855" y2="36" stroke="#c5c9d6" stroke-width="2"/>
       </svg>
     </div>
 
-    <!-- Two peer entities + association bridge -->
+    <!-- Three peer entities -->
     <div class="entity-row">
 
       <!-- Team entity -->
@@ -351,10 +372,26 @@
         </div>
       </div>
 
-      <!-- Association bridge -->
-      <div class="assoc-bridge">
-        <div class="assoc-line"></div>
-        <div class="assoc-label">Optional<br>association</div>
+      <!-- Athlete Profile entity -->
+      <div class="entity-col">
+        <div class="entity-hub hub-athlete" style="width:100%;">
+          <div class="hub-icon">🌟</div>
+          <div class="hub-name">Athlete Profile</div>
+          <div class="hub-desc">Parent-created, cross-team hub for one athlete</div>
+        </div>
+
+        <div class="connector-center"><div class="connector-up"></div></div>
+
+        <div class="athlete-col-card">
+          <p class="ac-desc">A centralized identity for one real child — surfacing stats, videos, and teams in one place. Because roster records across teams aren't linked in the system, this feature manually bridges them.</p>
+          <p class="ac-note">Each athlete can have one profile, connected to their roster entries across teams and sports.</p>
+          <div class="capabilities">
+            <div class="pill">All Teams</div>
+            <div class="pill">Career Stats</div>
+            <div class="pill">Video Highlights</div>
+            <div class="pill">Multi-Sport</div>
+          </div>
+        </div>
       </div>
 
       <!-- League/Tournament entity -->
@@ -385,26 +422,6 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- Athlete Profile -->
-    <div class="gap"></div>
-    <p class="athlete-connector-note">Athlete Profile is a separate, parent-managed experience that spans across teams</p>
-    <div class="athlete-card">
-      <div class="card-icon">🌟</div>
-      <div>
-        <div class="card-title">Athlete Profile</div>
-        <div class="card-desc">
-          A parent-created, cross-team hub for one real child. Because a player's roster records across different teams are not linked in the system, this feature provides a centralized identity — surfacing stats, videos, and teams in one place.
-        </div>
-        <p class="note">Each real athlete can have one profile, manually connected to their roster entries across teams and sports.</p>
-        <div class="capabilities">
-          <div class="pill">All Teams</div>
-          <div class="pill">Career Stats</div>
-          <div class="pill">Video Highlights</div>
-          <div class="pill">Multi-Sport</div>
-        </div>
-      </div>
     </div>
 
     <!-- Visibility band (commented out)
