@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameChanger — Future Functional Architecture v2</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      padding: 48px 32px;
+      color: #1a1a2e;
+    }
+
+    h1 { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; color: #1a1a2e; margin-bottom: 6px; }
+    .subtitle { text-align: center; font-size: 13px; color: #777; margin-bottom: 48px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+    .diagram {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* ── Onboarding band ── */
+    .onboarding-band {
+      width: 100%; background: #fff; border-radius: 14px;
+      padding: 18px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border-top: 4px solid #1a1a2e;
+    }
+    .ob-header { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #64748b; margin-bottom: 14px; }
+    .ob-roles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .ob-role { border-radius: 10px; padding: 12px 14px; border: 1.5px solid var(--rc); background: var(--rbg); }
+    .ob-role .role-name { font-size: 12px; font-weight: 700; color: var(--rc); margin-bottom: 5px; }
+    .ob-role .role-prompt { font-size: 11px; color: #4a5568; line-height: 1.5; }
+
+    /* ── Connectors ── */
+    .connector-down { width: 2px; height: 28px; background: #c5c9d6; flex-shrink: 0; }
+    .connector-center { display: flex; justify-content: center; width: 100%; }
+    .connector-up { width: 2px; height: 16px; background: #c5c9d6; }
+
+    /* ── Home screen ── */
+    .home-block {
+      background: #1a1a2e; color: #fff; border-radius: 14px;
+      padding: 18px 48px; text-align: center;
+      box-shadow: 0 4px 20px rgba(26,26,46,0.25); width: 100%;
+    }
+    .home-block .hb-label { font-size: 10px; opacity: 0.5; letter-spacing: 1px; margin-bottom: 5px; font-weight: 400; text-transform: uppercase; }
+    .home-block .hb-name { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .home-block .hb-desc { font-size: 12px; opacity: 0.6; margin-top: 5px; }
+    .home-block .hb-routes { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+    .hb-route { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 5px 14px; font-size: 11px; color: rgba(255,255,255,0.85); }
+
+    /* ── Four-entity peer row ── */
+    .entity-row {
+      display: grid;
+      grid-template-columns: 1fr 20px 1fr 52px 1fr 20px 1fr;
+      gap: 0;
+      width: 100%;
+      align-items: start;
+    }
+
+    .entity-col { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+    /* ── Association bridge (reused from current state) ── */
+    .assoc-bridge {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: flex-start; padding-top: 22px;
+      width: 52px; flex-shrink: 0; gap: 0;
+    }
+    .assoc-line { width: 100%; border-top: 2px dashed #c5c9d6; }
+    .assoc-label { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #94a3b8; text-align: center; margin-top: 5px; line-height: 1.4; }
+
+    /* Spacer between L/T and Celebrate */
+    .col-gap { width: 20px; flex-shrink: 0; }
+
+    /* ── Entity/pillar headers ── */
+    .entity-hub {
+      border-radius: 12px; padding: 14px 16px; text-align: center;
+      width: 100%; position: relative;
+    }
+    .entity-hub .hub-icon { font-size: 22px; margin-bottom: 5px; }
+    .entity-hub .hub-name { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+    .entity-hub .hub-desc { font-size: 11px; opacity: 0.8; margin-top: 3px; }
+    .hub-badge {
+      display: inline-block; background: rgba(255,255,255,0.25);
+      font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; padding: 2px 8px; border-radius: 8px; margin-top: 6px;
+    }
+
+    .hub-athlete  { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 4px 16px rgba(245,158,11,0.35); }
+    .hub-team     { background: #2563eb; color: #fff; box-shadow: 0 4px 16px rgba(37,99,235,0.3); }
+    .hub-lt       { background: #ea580c; color: #fff; box-shadow: 0 4px 16px rgba(234,88,12,0.3); }
+    .hub-celebrate { background: linear-gradient(135deg, #7c3aed, #db2777); color: #fff; box-shadow: 0 4px 16px rgba(124,58,237,0.3); }
+
+    .hub-athlete::after  { content: "ELEVATED"; position: absolute; top: 10px; right: 12px; font-size: 9px; font-weight: 700; background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 8px; }
+    .hub-celebrate::after { content: "NEW"; position: absolute; top: 10px; right: 12px; font-size: 9px; font-weight: 700; background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 8px; }
+
+    /* ── Feature / capability cards ── */
+    .feat-card {
+      background: #fff; border-radius: 14px; padding: 16px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border-top: 4px solid var(--accent);
+      width: 100%;
+    }
+    .feat-card + .feat-card { margin-top: 10px; }
+    .feat-card .card-icon { font-size: 18px; margin-bottom: 7px; }
+    .feat-card .card-title { font-size: 12px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+    .feat-card ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .feat-card ul li {
+      font-size: 11px; color: #4a5568; padding-left: 11px;
+      position: relative; line-height: 1.4;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 5px;
+    }
+    .feat-card ul li::before { content: "›"; position: absolute; left: 0; color: var(--accent); font-weight: 700; top: 0; }
+    .li-text { flex: 1; }
+
+    .sub-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      color: var(--accent); margin-top: 10px; margin-bottom: 5px;
+      border-top: 1px solid #eee; padding-top: 8px;
+    }
+    .sub-label-first { border-top: none; padding-top: 0; margin-top: 0; }
+
+    /* ── Content type grid ── */
+    .content-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 2px; }
+    .content-chip { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 7px; padding: 5px 8px; font-size: 10.5px; color: #4c1d95; }
+
+    /* ── Access badges ── */
+    .badge {
+      flex-shrink: 0; font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+      text-transform: uppercase; padding: 2px 5px; border-radius: 8px; white-space: nowrap; margin-top: 1px;
+    }
+    .badge-public  { background: #e0f2fe; color: #0369a1; }
+    .badge-ctrl    { background: #fef3c7; color: #92400e; }
+    .badge-members { background: #ede9fe; color: #5b21b6; }
+    .badge-elevated { background: #fce7f3; color: #9d174d; }
+
+    /* ── Accent colors ── */
+    .acc-athlete  { --accent: #d97706; }
+    .acc-mgmt     { --accent: #2563eb; }
+    .acc-coverage { --accent: #e11d48; }
+    .acc-comms    { --accent: #059669; }
+    .acc-lt       { --accent: #ea580c; }
+    .acc-celebrate { --accent: #7c3aed; }
+
+    /* ── Content flow arrows ── */
+    .flow-row {
+      display: grid;
+      grid-template-columns: 1fr 20px 1fr 52px 1fr 20px 1fr;
+      gap: 0;
+      width: 100%;
+    }
+    .flow-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .flow-spacer { width: 52px; flex-shrink: 0; }
+    .flow-col-gap { width: 20px; flex-shrink: 0; }
+    .flow-connector { width: 2px; height: 14px; background: #c5c9d6; }
+    .flow-arrow-pill {
+      background: #fff8f0; border: 1.5px solid #fed7aa;
+      border-radius: 20px; padding: 5px 12px;
+      font-size: 9.5px; color: #9a3412; font-weight: 600; text-align: center; line-height: 1.4;
+    }
+
+    /* ── Visibility band ── */
+    .vis-band { width: 100%; background: #fff; border-radius: 14px; padding: 20px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); border-left: 4px solid #64748b; }
+    .vis-band-header { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #64748b; margin-bottom: 14px; }
+    .vis-tiers { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .vis-tier { border-radius: 10px; padding: 14px 14px; }
+    .vis-tier-open { background: #e0f2fe; }
+    .vis-tier-ctrl { background: #fef3c7; }
+    .vis-tier-members { background: #ede9fe; }
+    .vis-tier-label { font-size: 11px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+    .vis-tier-open .vis-tier-label    { color: #0369a1; }
+    .vis-tier-ctrl .vis-tier-label    { color: #92400e; }
+    .vis-tier-members .vis-tier-label { color: #5b21b6; }
+    .vis-tier ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .vis-tier ul li { font-size: 11px; color: #374151; padding-left: 10px; position: relative; line-height: 1.4; }
+    .vis-tier-open    ul li::before { content: "›"; position: absolute; left: 0; color: #0369a1; font-weight: 700; }
+    .vis-tier-ctrl    ul li::before { content: "›"; position: absolute; left: 0; color: #92400e; font-weight: 700; }
+    .vis-tier-members ul li::before { content: "›"; position: absolute; left: 0; color: #5b21b6; font-weight: 700; }
+    .vis-tier-note { font-size: 10px; color: #6b7280; margin-top: 8px; font-style: italic; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 7px; }
+    .ctrl-subtier { background: rgba(255,255,255,0.5); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+    .ctrl-subtier-label { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #92400e; margin-bottom: 5px; }
+    .ctrl-subtier ul li { font-size: 10.5px; }
+
+    /* ── Relationships band ── */
+    .rel-band { width: 100%; background: #fff; border-radius: 14px; padding: 20px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); border-left: 4px solid #0891b2; }
+    .rel-band-header { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #0891b2; margin-bottom: 14px; }
+    .rel-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .rel-card { border-radius: 10px; padding: 12px 14px; border: 1.5px solid var(--rc); background: var(--rbg); }
+    .rel-card .rel-type { font-size: 11.5px; font-weight: 700; color: var(--rc); margin-bottom: 5px; }
+    .rel-card .rel-desc { font-size: 10.5px; color: #4a5568; line-height: 1.5; }
+    .rel-card .rel-access { font-size: 10px; color: var(--rc); margin-top: 7px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 6px; font-weight: 600; }
+
+    /* ── Legend ── */
+    .legend { margin-top: 40px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #718096; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    .gap-sm { height: 16px; }
+    .gap-md { height: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>GameChanger — Functional Architecture</h1>
+  <p class="subtitle">Future Vision v2</p>
+
+  <div class="diagram">
+
+    <!-- Role-based onboarding -->
+    <div class="onboarding-band">
+      <div class="ob-header">Role-Based Onboarding — First-Time User Entry</div>
+      <div class="ob-roles">
+        <div class="ob-role" style="--rc:#d97706; --rbg:#fffbeb;">
+          <div class="role-name">👨‍👩‍👧 Parent</div>
+          <div class="role-prompt">Prompted to set up their child's athlete profile. Then guided to find and join their team.</div>
+        </div>
+        <div class="ob-role" style="--rc:#059669; --rbg:#f0fdf4;">
+          <div class="role-name">⚡ Player</div>
+          <div class="role-prompt">Prompted to create their own athlete profile. Team membership follows.</div>
+        </div>
+        <div class="ob-role" style="--rc:#2563eb; --rbg:#eff6ff;">
+          <div class="role-name">🏆 Coach / Staff</div>
+          <div class="role-prompt">Prompted to create or join a team first. Team experience is their primary context.</div>
+        </div>
+        <div class="ob-role" style="--rc:#7c3aed; --rbg:#faf5ff;">
+          <div class="role-name">👏 Fan</div>
+          <div class="role-prompt">Directed to Celebrate to discover teams and athletes. Can follow teams without joining.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector-down"></div>
+
+    <!-- Home Screen -->
+    <div class="home-block">
+      <div class="hb-label">Primary Entry Point — All Users</div>
+      <div class="hb-name">Home Screen</div>
+      <div class="hb-desc">Aggregates and routes to the major experiences based on your context</div>
+      <div class="hb-routes">
+        <div class="hb-route">Your athlete(s)</div>
+        <div class="hb-route">Your teams</div>
+        <div class="hb-route">Celebrate</div>
+        <div class="hb-route">Upcoming schedule</div>
+      </div>
+    </div>
+
+    <!-- Fan-out to four entities -->
+    <div style="width:100%; height:36px; flex-shrink:0;">
+      <svg width="100%" height="36" preserveAspectRatio="none" viewBox="0 0 1160 36" style="display:block;">
+        <line x1="580" y1="0"  x2="580" y2="18" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="145" y1="18" x2="1015" y2="18" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="145" y1="18" x2="145" y2="36" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="435" y1="18" x2="435" y2="36" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="725" y1="18" x2="725" y2="36" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="1015" y1="18" x2="1015" y2="36" stroke="#c5c9d6" stroke-width="2"/>
+      </svg>
+    </div>
+
+    <!-- Four peer entities -->
+    <div class="entity-row">
+
+      <!-- Athlete Profile -->
+      <div class="entity-col">
+        <div class="entity-hub hub-athlete" style="width:100%;">
+          <div class="hub-icon">🌟</div>
+          <div class="hub-name">Athlete Profile</div>
+          <div class="hub-desc">One player's full story, across all teams</div>
+          <div class="hub-badge">Primary for most users</div>
+        </div>
+        <div class="connector-center"><div class="connector-up"></div></div>
+        <div class="feat-card acc-athlete" style="width:100%;">
+          <div class="sub-label sub-label-first">What lives here</div>
+          <ul>
+            <li><span class="li-text">Player clips &amp; highlights</span><span class="badge badge-elevated">Elevated</span></li>
+            <li><span class="li-text">Stats across all teams &amp; seasons</span><span class="badge badge-elevated">Elevated</span></li>
+            <li><span class="li-text">Moments &amp; photos</span><span class="badge badge-elevated">Elevated</span></li>
+            <li><span class="li-text">Multi-sport career view</span></li>
+            <li><span class="li-text">Upcoming games &amp; schedule</span></li>
+            <li><span class="li-text">Connected teams</span></li>
+          </ul>
+          <div class="sub-label">Celebrate integration</div>
+          <ul>
+            <li><span class="li-text">Opt-in public profile</span></li>
+            <li><span class="li-text">Standout moments surface in Celebrate feed</span></li>
+            <li><span class="li-text">Discoverable by any app user</span><span class="badge badge-public">Public</span></li>
+          </ul>
+          <div class="sub-label">Access</div>
+          <ul>
+            <li><span class="li-text">Created &amp; managed by parent or player</span></li>
+            <li><span class="li-text">Linked to roster entries across teams</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Gap between Athlete and Team -->
+      <div></div>
+
+      <!-- Team Experience -->
+      <div class="entity-col">
+        <div class="entity-hub hub-team" style="width:100%;">
+          <div class="hub-icon">🏅</div>
+          <div class="hub-name">Team Experience</div>
+          <div class="hub-desc">The team as the organizing concept for game coverage</div>
+        </div>
+        <div class="connector-center"><div class="connector-up"></div></div>
+        <div class="feat-card acc-mgmt" style="width:100%;">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">Team Management</div>
+          <ul>
+            <li><span class="li-text">Find team via search</span><span class="badge badge-public">Public</span></li>
+            <li><span class="li-text">View schedule &amp; results</span><span class="badge badge-public">Public</span></li>
+            <li><span class="li-text">Create or join a team</span></li>
+            <li><span class="li-text">Add staff &amp; community members</span></li>
+            <li><span class="li-text">Manage player roster</span></li>
+            <li><span class="li-text">Player RSVP for events</span></li>
+          </ul>
+        </div>
+        <div class="feat-card acc-coverage" style="width:100%;">
+          <div class="card-icon">📡</div>
+          <div class="card-title">Game Coverage</div>
+          <div class="sub-label sub-label-first">Live</div>
+          <ul>
+            <li><span class="li-text">Livestream (produce &amp; watch)</span><span class="badge badge-ctrl">Team-controlled</span></li>
+            <li><span class="li-text">Live scoring</span></li>
+            <li><span class="li-text">Live play-by-play</span></li>
+          </ul>
+          <div class="sub-label">Post-Game</div>
+          <ul>
+            <li><span class="li-text">Full game replays</span><span class="badge badge-ctrl">Team-controlled</span></li>
+            <li><span class="li-text">Highlight clips</span></li>
+            <li><span class="li-text">AI-generated recaps</span></li>
+            <li><span class="li-text">Game &amp; player insights</span></li>
+            <li><span class="li-text">Player stats</span><span class="badge badge-ctrl">Team-controlled</span></li>
+          </ul>
+        </div>
+        <div class="feat-card acc-comms" style="width:100%;">
+          <div class="card-icon">💬</div>
+          <div class="card-title">Team Communication</div>
+          <ul>
+            <li><span class="li-text">Team group chat</span><span class="badge badge-members">Members only</span></li>
+            <li><span class="li-text">Single shared thread per team</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Association bridge: Team ↔ League/Tournament -->
+      <div class="assoc-bridge">
+        <div class="assoc-line"></div>
+        <div class="assoc-label">Optional<br>association</div>
+      </div>
+
+      <!-- League / Tournament -->
+      <div class="entity-col">
+        <div class="entity-hub hub-lt" style="width:100%;">
+          <div class="hub-icon">🏆</div>
+          <div class="hub-name">League / Tournament</div>
+          <div class="hub-desc">Organizes multiple teams</div>
+        </div>
+        <div class="connector-center"><div class="connector-up"></div></div>
+        <div class="feat-card acc-lt" style="width:100%;">
+          <div class="sub-label sub-label-first">Admin capabilities</div>
+          <ul>
+            <li><span class="li-text">Create a league or tournament</span></li>
+            <li><span class="li-text">Add / invite co-admins</span></li>
+            <li><span class="li-text">Add / invite teams to participate</span></li>
+            <li><span class="li-text">Build and manage game schedule</span></li>
+            <li><span class="li-text">Score games for any participating team</span></li>
+          </ul>
+          <div class="sub-label">When a team participates</div>
+          <ul>
+            <li><span class="li-text">Games appear in both the org's and team's schedule</span></li>
+            <li><span class="li-text">Teams retain RSVP control</span></li>
+            <li><span class="li-text">Only teams can livestream</span></li>
+          </ul>
+        </div>
+      </div>
+
+        <!-- Gap between L/T and Celebrate -->
+      <div></div>
+
+      <!-- Celebrate -->
+      <div class="entity-col">
+        <div class="entity-hub hub-celebrate" style="width:100%;">
+          <div class="hub-icon">👏</div>
+          <div class="hub-name">Celebrate</div>
+          <div class="hub-desc">Discover moments from across youth sports</div>
+        </div>
+        <div class="connector-center"><div class="connector-up"></div></div>
+        <div class="feat-card acc-celebrate" style="width:100%;">
+          <div class="sub-label sub-label-first">Content Types</div>
+          <div class="content-type-grid">
+            <div class="content-chip">🎬 Video clips</div>
+            <div class="content-chip">🎞️ Highlight reels</div>
+            <div class="content-chip">📊 Stat cards</div>
+            <div class="content-chip">📸 Photo galleries</div>
+          </div>
+          <div class="sub-label">Surfacing &amp; Curation</div>
+          <ul>
+            <li><span class="li-text">Rules-based standout performance spotlights</span></li>
+            <li><span class="li-text">Personalized by teams you're on &amp; follow</span></li>
+            <li><span class="li-text">Public &amp; non-restricted content only</span><span class="badge badge-public">Public</span></li>
+          </ul>
+          <div class="sub-label">Discovery Destinations</div>
+          <ul>
+            <li><span class="li-text">Navigate to a team's public page</span></li>
+            <li><span class="li-text">Visit an athlete's public profile</span></li>
+            <li><span class="li-text">Follow a team from the feed</span></li>
+          </ul>
+          <div class="sub-label">Not This</div>
+          <ul>
+            <li><span class="li-text" style="color:#94a3b8;">No comments, likes, or social layer</span></li>
+            <li><span class="li-text" style="color:#94a3b8;">No user posts outside of game coverage</span></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Content flow arrows -->
+    <div class="gap-sm"></div>
+    <div class="flow-row" style="width:100%;">
+      <div class="flow-cell"><!-- Athlete receives --></div>
+      <div></div>
+      <div class="flow-cell">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div class="flow-connector"></div>
+            <div class="flow-arrow-pill">← player clips,<br>stats &amp; moments</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div class="flow-connector"></div>
+            <div class="flow-arrow-pill">public content →<br>surfaces in Celebrate</div>
+          </div>
+        </div>
+      </div>
+      <div></div>
+      <div class="flow-cell"><!-- L/T --></div>
+      <div></div>
+      <div class="flow-cell"><!-- Celebrate receives --></div>
+    </div>
+    <div class="gap-sm"></div>
+
+    <!-- Visibility band -->
+    <div class="vis-band">
+      <div class="vis-band-header">Content Visibility &amp; Access Control</div>
+      <div class="vis-tiers">
+        <div class="vis-tier vis-tier-open">
+          <div class="vis-tier-label">🌐 Open to any app user</div>
+          <ul>
+            <li>Team profile &amp; identity</li>
+            <li>Team schedule &amp; game results</li>
+            <li>League &amp; tournament profiles</li>
+            <li>Celebrate feed</li>
+            <li>Public athlete profiles (opt-in)</li>
+          </ul>
+          <div class="vis-tier-note">Any user can search for and discover any team, league, tournament, or athlete. Celebrate is accessible without membership.</div>
+        </div>
+        <div class="vis-tier vis-tier-ctrl">
+          <div class="vis-tier-label">⚙️ Team-controlled</div>
+          <p style="font-size:10.5px; color:#78350f; margin-bottom:8px;">Each team sets their own visibility level:</p>
+          <div class="ctrl-subtier">
+            <div class="ctrl-subtier-label">Stats visibility</div>
+            <ul>
+              <li>Any app user</li>
+              <li>Confirmed members only</li>
+              <li>Family &amp; player (own stats only)</li>
+            </ul>
+          </div>
+          <div class="ctrl-subtier" style="margin-top:8px;">
+            <div class="ctrl-subtier-label">Livestream &amp; replays</div>
+            <ul>
+              <li>Open to any app user</li>
+              <li>Restricted to members only</li>
+            </ul>
+          </div>
+        </div>
+        <div class="vis-tier vis-tier-members">
+          <div class="vis-tier-label">👥 Members only</div>
+          <ul>
+            <li>Team group chat</li>
+            <li>Roster details</li>
+            <li>RSVP &amp; event management</li>
+          </ul>
+          <div class="vis-tier-note">Requires confirmed membership — not just following or account creation.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gap-md"></div>
+
+    <!-- User relationships band -->
+    <div class="rel-band">
+      <div class="rel-band-header">User Relationship Types</div>
+      <div class="rel-grid">
+        <div class="rel-card" style="--rc:#ea580c; --rbg:#fff7ed;">
+          <div class="rel-type">League / Tournament Admin</div>
+          <div class="rel-desc">Creates and manages a league or tournament. Invites teams, sets schedules, can score any game.</div>
+          <div class="rel-access">Full org access</div>
+        </div>
+        <div class="rel-card" style="--rc:#2563eb; --rbg:#eff6ff;">
+          <div class="rel-type">Staff / Coach</div>
+          <div class="rel-desc">Manages the team. Creates schedule, adds roster, controls team privacy settings.</div>
+          <div class="rel-access">Full team access</div>
+        </div>
+        <div class="rel-card" style="--rc:#059669; --rbg:#f0fdf4;">
+          <div class="rel-type">Community Member</div>
+          <div class="rel-desc">Parents, family, and fans confirmed as part of the team. Access to chat, RSVP, and member-restricted content.</div>
+          <div class="rel-access">Members-only access</div>
+        </div>
+        <div class="rel-card" style="--rc:#db2777; --rbg:#fdf2f8;">
+          <div class="rel-type">Follower</div>
+          <div class="rel-desc">Any user who follows a team. Public content from that team surfaces in their Celebrate feed. No membership required.</div>
+          <div class="rel-access">Public content only</div>
+        </div>
+        <div class="rel-card" style="--rc:#d97706; --rbg:#fffbeb;">
+          <div class="rel-type">Athlete / Parent <span style="font-size:9px; font-weight:700; background:#fef3c7; color:#92400e; padding:1px 5px; border-radius:6px; margin-left:4px; vertical-align:middle;">ELEVATED</span></div>
+          <div class="rel-desc">Has an athlete profile linked to roster entries across teams. Player-first view of clips, stats, and moments.</div>
+          <div class="rel-access">Cross-team athlete access</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#2563eb;"></div>
+        Team Experience
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#ea580c;"></div>
+        League / Tournament
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-public" style="font-size:10px;">Public</span>
+        Visible to any app user
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-ctrl" style="font-size:10px;">Team-controlled</span>
+        Visibility set per team
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-members" style="font-size:10px;">Members only</span>
+        Confirmed team members
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-elevated" style="font-size:10px;">Elevated</span>
+        Existing feature, now first-class
+      </div>
+      <div class="legend-item">
+        <span style="font-size:9px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:8px; text-transform:uppercase; letter-spacing:0.4px;">NEW</span>
+        New in future vision
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameChanger — Future Functional Architecture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      padding: 48px 32px;
+      color: #1a1a2e;
+    }
+
+    h1 { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; color: #1a1a2e; margin-bottom: 6px; }
+    .subtitle { text-align: center; font-size: 13px; color: #777; margin-bottom: 48px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+    .diagram {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* ── Onboarding band ── */
+    .onboarding-band {
+      width: 100%;
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border-top: 4px solid #1a1a2e;
+    }
+    .ob-header {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #64748b; margin-bottom: 14px;
+    }
+    .ob-roles {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .ob-role {
+      border-radius: 10px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--rc);
+      background: var(--rbg);
+    }
+    .ob-role .role-name {
+      font-size: 12px; font-weight: 700; color: var(--rc); margin-bottom: 5px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ob-role .role-prompt {
+      font-size: 11px; color: #4a5568; line-height: 1.5;
+    }
+
+    /* ── Connector down ── */
+    .connector-down {
+      width: 2px; height: 28px; background: #c5c9d6; flex-shrink: 0;
+    }
+
+    /* ── Home screen block ── */
+    .home-block {
+      background: #1a1a2e;
+      color: #fff;
+      border-radius: 14px;
+      padding: 18px 48px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(26,26,46,0.25);
+      width: 100%;
+    }
+    .home-block .hb-label {
+      font-size: 10px; opacity: 0.5; letter-spacing: 1px;
+      margin-bottom: 5px; font-weight: 400; text-transform: uppercase;
+    }
+    .home-block .hb-name { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .home-block .hb-desc { font-size: 12px; opacity: 0.6; margin-top: 5px; }
+    .home-block .hb-routes {
+      display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap;
+    }
+    .hb-route {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* ── Fan-out connector ── */
+    .fanout-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 40px;
+    }
+    .fanout-row svg { overflow: visible; }
+
+    /* ── Three pillars ── */
+    .three-pillars {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      align-items: start;
+    }
+
+    .pillar { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+    /* ── Pillar header ── */
+    .pillar-header {
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: center;
+      width: 100%;
+      position: relative;
+    }
+    .ph-athlete  {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(245,158,11,0.35);
+    }
+    .ph-team {
+      background: #2563eb;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+    }
+    .ph-explore {
+      background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+    }
+    .ph-explore::after, .ph-athlete::after {
+      content: "NEW";
+      position: absolute;
+      top: 10px; right: 12px;
+      font-size: 9px; font-weight: 700; letter-spacing: 1px;
+      background: rgba(255,255,255,0.25);
+      padding: 2px 7px; border-radius: 8px;
+    }
+    .ph-athlete::after { content: "ELEVATED"; }
+    .pillar-header .ph-icon { font-size: 22px; margin-bottom: 5px; }
+    .pillar-header .ph-name { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+    .pillar-header .ph-desc { font-size: 11px; opacity: 0.8; margin-top: 3px; }
+    .primary-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.25);
+      font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; padding: 2px 8px; border-radius: 8px;
+      margin-top: 6px;
+    }
+
+    .pillar-connector { width: 2px; height: 16px; background: #c5c9d6; }
+
+    /* ── Pillar cards ── */
+    .pillar-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border-top: 4px solid var(--accent);
+      width: 100%;
+    }
+    .pillar-card + .pillar-card { margin-top: 10px; }
+    .pillar-card .card-icon { font-size: 18px; margin-bottom: 8px; }
+    .pillar-card .card-title {
+      font-size: 12px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px;
+    }
+    .pillar-card ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .pillar-card ul li {
+      font-size: 11px; color: #4a5568; padding-left: 11px;
+      position: relative; line-height: 1.4;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 5px;
+    }
+    .pillar-card ul li::before {
+      content: "›"; position: absolute; left: 0;
+      color: var(--accent); font-weight: 700; top: 0;
+    }
+    .li-text { flex: 1; }
+
+    .sub-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      color: var(--accent); margin-top: 10px; margin-bottom: 5px;
+      border-top: 1px solid #eee; padding-top: 8px;
+    }
+    .sub-label-first { border-top: none; padding-top: 0; margin-top: 0; }
+
+    /* ── Content type grid ── */
+    .content-type-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 2px;
+    }
+    .content-chip {
+      background: #f5f3ff; border: 1px solid #ddd6fe;
+      border-radius: 7px; padding: 5px 8px;
+      font-size: 10.5px; color: #4c1d95;
+    }
+
+    /* ── Access badges ── */
+    .badge {
+      flex-shrink: 0; font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+      text-transform: uppercase; padding: 2px 5px; border-radius: 8px;
+      white-space: nowrap; margin-top: 1px;
+    }
+    .badge-public  { background: #e0f2fe; color: #0369a1; }
+    .badge-ctrl    { background: #fef3c7; color: #92400e; }
+    .badge-members { background: #ede9fe; color: #5b21b6; }
+    .badge-new     { background: #fce7f3; color: #9d174d; }
+
+    /* ── Accent colors ── */
+    .acc-athlete { --accent: #d97706; }
+    .acc-mgmt    { --accent: #2563eb; }
+    .acc-coverage{ --accent: #e11d48; }
+    .acc-comms   { --accent: #059669; }
+    .acc-explore { --accent: #7c3aed; }
+
+    /* ── Content flow section ── */
+    .flow-section {
+      width: 100%;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      margin: 4px 0;
+    }
+    .flow-arrows {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+    }
+    .flow-cell {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .flow-arrow-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: #fff8f0; border: 1.5px solid #fed7aa;
+      border-radius: 20px; padding: 6px 14px;
+      font-size: 10px; color: #9a3412; font-weight: 600;
+      text-align: center;
+    }
+    .flow-connector { width: 2px; height: 14px; background: #c5c9d6; }
+    .flow-empty { display: flex; }
+
+    /* ── Visibility band ── */
+    .vis-band {
+      width: 100%; background: #fff; border-radius: 14px;
+      padding: 20px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border-left: 4px solid #64748b;
+    }
+    .vis-band-header {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #64748b; margin-bottom: 14px;
+    }
+    .vis-tiers { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .vis-tier { border-radius: 10px; padding: 14px 14px; }
+    .vis-tier-open    { background: #e0f2fe; }
+    .vis-tier-ctrl    { background: #fef3c7; }
+    .vis-tier-members { background: #ede9fe; }
+    .vis-tier-label {
+      font-size: 11px; font-weight: 700; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .vis-tier-open .vis-tier-label    { color: #0369a1; }
+    .vis-tier-ctrl .vis-tier-label    { color: #92400e; }
+    .vis-tier-members .vis-tier-label { color: #5b21b6; }
+    .vis-tier ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .vis-tier ul li { font-size: 11px; color: #374151; padding-left: 10px; position: relative; line-height: 1.4; }
+    .vis-tier-open    ul li::before { content: "›"; position: absolute; left: 0; color: #0369a1; font-weight: 700; }
+    .vis-tier-ctrl    ul li::before { content: "›"; position: absolute; left: 0; color: #92400e; font-weight: 700; }
+    .vis-tier-members ul li::before { content: "›"; position: absolute; left: 0; color: #5b21b6; font-weight: 700; }
+    .vis-tier-note { font-size: 10px; color: #6b7280; margin-top: 8px; font-style: italic; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 7px; }
+    .ctrl-subtier { background: rgba(255,255,255,0.5); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+    .ctrl-subtier-label { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #92400e; margin-bottom: 5px; }
+    .ctrl-subtier ul li { font-size: 10.5px; }
+
+    /* ── Relationships band ── */
+    .rel-band {
+      width: 100%; background: #fff; border-radius: 14px;
+      padding: 20px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border-left: 4px solid #0891b2;
+    }
+    .rel-band-header { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #0891b2; margin-bottom: 14px; }
+    .rel-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .rel-card { border-radius: 10px; padding: 12px 14px; border: 1.5px solid var(--rc); background: var(--rbg); }
+    .rel-card .rel-type { font-size: 12px; font-weight: 700; color: var(--rc); margin-bottom: 5px; }
+    .rel-card .rel-desc { font-size: 11px; color: #4a5568; line-height: 1.5; }
+    .rel-card .rel-access { font-size: 10px; color: var(--rc); margin-top: 7px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 6px; font-weight: 600; }
+
+    /* ── Legend ── */
+    .legend { margin-top: 40px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #718096; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    .gap-sm { height: 16px; }
+    .gap-md { height: 24px; }
+  </style>
+</head>
+<body>
+
+  <h1>GameChanger — Functional Architecture</h1>
+  <p class="subtitle">Future Vision</p>
+
+  <div class="diagram">
+
+    <!-- Role-based onboarding -->
+    <div class="onboarding-band" style="width:100%;">
+      <div class="ob-header">Role-Based Onboarding — First-Time User Entry</div>
+      <div class="ob-roles">
+        <div class="ob-role" style="--rc: #d97706; --rbg: #fffbeb;">
+          <div class="role-name">👨‍👩‍👧 Parent</div>
+          <div class="role-prompt">Prompted to set up their child's athlete profile. Then guided to find and join their team.</div>
+        </div>
+        <div class="ob-role" style="--rc: #059669; --rbg: #f0fdf4;">
+          <div class="role-name">⚡ Player</div>
+          <div class="role-prompt">Prompted to create their own athlete profile. Team membership follows.</div>
+        </div>
+        <div class="ob-role" style="--rc: #2563eb; --rbg: #eff6ff;">
+          <div class="role-name">🏆 Coach / Staff</div>
+          <div class="role-prompt">Prompted to create or join a team first. Team experience is their primary context.</div>
+        </div>
+        <div class="ob-role" style="--rc: #7c3aed; --rbg: #faf5ff;">
+          <div class="role-name">👏 Fan</div>
+          <div class="role-prompt">Directed to Explore to discover teams and athletes. Can follow teams without joining.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector-down"></div>
+
+    <!-- Home Screen -->
+    <div class="home-block">
+      <div class="hb-label">Primary Entry Point — All Users</div>
+      <div class="hb-name">Home Screen</div>
+      <div class="hb-desc">Aggregates and routes to the major experiences based on your context</div>
+      <div class="hb-routes">
+        <div class="hb-route">Your athlete(s)</div>
+        <div class="hb-route">Your teams</div>
+        <div class="hb-route">Explore &amp; discover</div>
+        <div class="hb-route">Upcoming schedule</div>
+      </div>
+    </div>
+
+    <!-- Fan-out connectors -->
+    <div class="fanout-row" style="width:100%; max-width:1080px;">
+      <svg width="100%" height="40" preserveAspectRatio="none" viewBox="0 0 1080 40">
+        <line x1="540" y1="0" x2="540" y2="20" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="180" y1="20" x2="900" y2="20" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="180" y1="20" x2="180" y2="40" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="540" y1="20" x2="540" y2="40" stroke="#c5c9d6" stroke-width="2"/>
+        <line x1="900" y1="20" x2="900" y2="40" stroke="#c5c9d6" stroke-width="2"/>
+      </svg>
+    </div>
+
+    <!-- Three pillars -->
+    <div class="three-pillars">
+
+      <!-- PILLAR 1: Athlete Profile -->
+      <div class="pillar">
+        <div class="pillar-header ph-athlete" style="width:100%;">
+          <div class="ph-icon">🌟</div>
+          <div class="ph-name">Athlete Profile</div>
+          <div class="ph-desc">One player's full story, across all teams</div>
+          <div class="primary-badge">Primary for most users</div>
+        </div>
+        <div class="pillar-connector"></div>
+        <div class="pillar-card acc-athlete" style="width:100%;">
+          <div class="sub-label sub-label-first">What lives here</div>
+          <ul>
+            <li><span class="li-text">Player clips &amp; highlights</span><span class="badge badge-new">Elevated</span></li>
+            <li><span class="li-text">Stats across all teams &amp; seasons</span><span class="badge badge-new">Elevated</span></li>
+            <li><span class="li-text">Moments &amp; photos</span><span class="badge badge-new">Elevated</span></li>
+            <li><span class="li-text">Multi-sport career view</span></li>
+            <li><span class="li-text">Upcoming games &amp; schedule</span></li>
+            <li><span class="li-text">Connected teams</span></li>
+          </ul>
+          <div class="sub-label">Explore integration</div>
+          <ul>
+            <li><span class="li-text">Opt-in public profile</span></li>
+            <li><span class="li-text">Standout moments surface in Explore feed</span></li>
+            <li><span class="li-text">Discoverable by any app user</span><span class="badge badge-public">Public</span></li>
+          </ul>
+          <div class="sub-label">Access</div>
+          <ul>
+            <li><span class="li-text">Created &amp; managed by parent or player</span></li>
+            <li><span class="li-text">Linked manually to roster entries across teams</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- PILLAR 2: Team Experience -->
+      <div class="pillar">
+        <div class="pillar-header ph-team" style="width:100%;">
+          <div class="ph-icon">🏅</div>
+          <div class="ph-name">Team Experience</div>
+          <div class="ph-desc">The team as the organizing concept for game coverage</div>
+        </div>
+        <div class="pillar-connector"></div>
+        <!-- Team Management card -->
+        <div class="pillar-card acc-mgmt" style="width:100%;">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">Team Management</div>
+          <ul>
+            <li><span class="li-text">Find team via search</span><span class="badge badge-public">Public</span></li>
+            <li><span class="li-text">View schedule &amp; results</span><span class="badge badge-public">Public</span></li>
+            <li><span class="li-text">Create or join a team</span></li>
+            <li><span class="li-text">Add staff &amp; community members</span></li>
+            <li><span class="li-text">Manage player roster</span></li>
+            <li><span class="li-text">Player RSVP for events</span></li>
+          </ul>
+        </div>
+        <div style="height:10px;"></div>
+        <!-- Game Coverage card -->
+        <div class="pillar-card acc-coverage" style="width:100%;">
+          <div class="card-icon">📡</div>
+          <div class="card-title">Game Coverage</div>
+          <div class="sub-label sub-label-first">Live</div>
+          <ul>
+            <li><span class="li-text">Livestream (produce &amp; watch)</span><span class="badge badge-ctrl">Team-controlled</span></li>
+            <li><span class="li-text">Live scoring</span></li>
+            <li><span class="li-text">Live play-by-play</span></li>
+          </ul>
+          <div class="sub-label">Post-Game</div>
+          <ul>
+            <li><span class="li-text">Full game replays</span><span class="badge badge-ctrl">Team-controlled</span></li>
+            <li><span class="li-text">Highlight clips</span></li>
+            <li><span class="li-text">AI-generated recaps</span></li>
+            <li><span class="li-text">Game &amp; player insights</span></li>
+            <li><span class="li-text">Player stats</span><span class="badge badge-ctrl">Team-controlled</span></li>
+          </ul>
+        </div>
+        <div style="height:10px;"></div>
+        <!-- Team Communication card -->
+        <div class="pillar-card acc-comms" style="width:100%;">
+          <div class="card-icon">💬</div>
+          <div class="card-title">Team Communication</div>
+          <ul>
+            <li><span class="li-text">Team group chat</span><span class="badge badge-members">Members only</span></li>
+            <li><span class="li-text">Single shared thread per team</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- PILLAR 3: Explore / Watch -->
+      <div class="pillar">
+        <div class="pillar-header ph-explore" style="width:100%;">
+          <div class="ph-icon">👏</div>
+          <div class="ph-name">Celebrate</div>
+          <div class="ph-desc">Discover moments from across youth sports</div>
+        </div>
+        <div class="pillar-connector"></div>
+        <div class="pillar-card acc-explore" style="width:100%;">
+          <div class="sub-label sub-label-first">Content Types</div>
+          <div class="content-type-grid">
+            <div class="content-chip">🎬 Video clips</div>
+            <div class="content-chip">🎞️ Highlight reels</div>
+            <div class="content-chip">📊 Stat cards</div>
+            <div class="content-chip">📸 Photo galleries</div>
+          </div>
+          <div class="sub-label">Surfacing &amp; Curation</div>
+          <ul>
+            <li><span class="li-text">Rules-based standout performance spotlights</span></li>
+            <li><span class="li-text">Personalized by teams you're on &amp; follow</span></li>
+            <li><span class="li-text">Public &amp; non-restricted content only</span><span class="badge badge-public">Public</span></li>
+          </ul>
+          <div class="sub-label">Discovery Destinations</div>
+          <ul>
+            <li><span class="li-text">Navigate to a team's public page</span></li>
+            <li><span class="li-text">Visit an athlete's public profile</span></li>
+            <li><span class="li-text">Follow a team from the feed</span></li>
+          </ul>
+          <div class="sub-label">Not This</div>
+          <ul>
+            <li><span class="li-text" style="color:#94a3b8;">No comments, likes, or social layer</span></li>
+            <li><span class="li-text" style="color:#94a3b8;">No user posts outside of game coverage</span></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Content flow arrows -->
+    <div class="gap-sm"></div>
+    <div class="flow-arrows" style="width:100%;">
+      <div class="flow-cell">
+        <!-- empty: athlete profile receives, doesn't push down here -->
+      </div>
+      <div class="flow-cell">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div class="flow-connector"></div>
+            <div class="flow-arrow-pill" style="text-align:center; font-size:9.5px;">
+              ← player clips,<br>stats &amp; moments
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div class="flow-connector"></div>
+            <div class="flow-arrow-pill" style="text-align:center; font-size:9.5px;">
+              public content →<br>surfaces in Explore
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flow-cell">
+        <!-- empty -->
+      </div>
+    </div>
+    <div class="gap-sm"></div>
+
+    <!-- Visibility band -->
+    <div class="vis-band">
+      <div class="vis-band-header">Content Visibility &amp; Access Control</div>
+      <div class="vis-tiers">
+        <div class="vis-tier vis-tier-open">
+          <div class="vis-tier-label">🌐 Open to any app user</div>
+          <ul>
+            <li>Team profile &amp; identity</li>
+            <li>Team schedule &amp; game results</li>
+            <li>Celebrate feed</li>
+            <li>Public athlete profiles (opt-in)</li>
+          </ul>
+          <div class="vis-tier-note">Any user can search for and discover any team or athlete. Explore is accessible without team membership.</div>
+        </div>
+        <div class="vis-tier vis-tier-ctrl">
+          <div class="vis-tier-label">⚙️ Team-controlled</div>
+          <p style="font-size:10.5px; color:#78350f; margin-bottom:8px;">Each team sets their own visibility level:</p>
+          <div class="ctrl-subtier">
+            <div class="ctrl-subtier-label">Stats visibility</div>
+            <ul>
+              <li>Any app user</li>
+              <li>Confirmed members only</li>
+              <li>Family &amp; player (own stats only)</li>
+            </ul>
+          </div>
+          <div class="ctrl-subtier" style="margin-top:8px;">
+            <div class="ctrl-subtier-label">Livestream &amp; replays</div>
+            <ul>
+              <li>Open to any app user</li>
+              <li>Restricted to members only</li>
+            </ul>
+          </div>
+        </div>
+        <div class="vis-tier vis-tier-members">
+          <div class="vis-tier-label">👥 Members only</div>
+          <ul>
+            <li>Team group chat</li>
+            <li>Roster details</li>
+            <li>RSVP &amp; event management</li>
+          </ul>
+          <div class="vis-tier-note">Requires confirmed membership — not just following or account creation.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gap-md"></div>
+
+    <!-- User relationships band -->
+    <div class="rel-band">
+      <div class="rel-band-header">User–Team Relationship Types</div>
+      <div class="rel-grid">
+        <div class="rel-card" style="--rc: #2563eb; --rbg: #eff6ff;">
+          <div class="rel-type">Staff / Coach</div>
+          <div class="rel-desc">Manages the team. Creates schedule, adds roster, controls team privacy settings.</div>
+          <div class="rel-access">Full team access</div>
+        </div>
+        <div class="rel-card" style="--rc: #059669; --rbg: #f0fdf4;">
+          <div class="rel-type">Community Member</div>
+          <div class="rel-desc">Parents, family, and fans confirmed as part of the team. Access to chat, RSVP, and member-restricted content.</div>
+          <div class="rel-access">Members-only access</div>
+        </div>
+        <div class="rel-card" style="--rc: #db2777; --rbg: #fdf2f8;">
+          <div class="rel-type">Follower</div>
+          <div class="rel-desc">Any user who follows a team. Public content from that team surfaces in their Explore feed. No membership required.</div>
+          <div class="rel-access">Public content only</div>
+        </div>
+        <div class="rel-card" style="--rc: #d97706; --rbg: #fffbeb;">
+          <div class="rel-type">Athlete / Parent <span style="font-size:9px; font-weight:700; background:#fef3c7; color:#92400e; padding:1px 5px; border-radius:6px; margin-left:4px; vertical-align:middle;">ELEVATED</span></div>
+          <div class="rel-desc">Has an athlete profile linked to one or more roster entries. Player-first view of clips, stats, and moments across all teams.</div>
+          <div class="rel-access">Cross-team athlete access</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <span class="badge badge-public" style="font-size:10px;">Public</span>
+        Visible to any app user
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-ctrl" style="font-size:10px;">Team-controlled</span>
+        Visibility set per team
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-members" style="font-size:10px;">Members only</span>
+        Confirmed team members
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-new" style="font-size:10px;">New</span>
+        New in future vision
+      </div>
+      <div class="legend-item">
+        <span class="badge" style="background:#fef3c7; color:#92400e; font-size:10px;">Elevated</span>
+        Existing feature, elevated to first-class
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
