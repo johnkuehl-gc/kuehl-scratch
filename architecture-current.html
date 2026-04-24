@@ -123,10 +123,8 @@
     .feature-card ul li {
       font-size: 11px; color: #4a5568; padding-left: 11px;
       position: relative; line-height: 1.4;
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 5px;
     }
     .feature-card ul li::before { content: "›"; position: absolute; left: 0; color: var(--accent); font-weight: 700; top: 0; }
-    .li-text { flex: 1; }
 
     .subsection-label {
       font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
@@ -134,7 +132,8 @@
       border-top: 1px solid #eee; padding-top: 8px;
     }
 
-    /* ── Access badges ── */
+    /* ── Access badges (commented out) ── */
+    /*
     .badge {
       flex-shrink: 0; font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
       text-transform: uppercase; padding: 2px 5px; border-radius: 8px;
@@ -143,6 +142,7 @@
     .badge-public  { background: #e0f2fe; color: #0369a1; }
     .badge-ctrl    { background: #fef3c7; color: #92400e; }
     .badge-members { background: #ede9fe; color: #5b21b6; }
+    */
 
     /* ── L/T capability card (under L/T hub) ── */
     .lt-card {
@@ -265,12 +265,12 @@
             <div class="card-icon">⚙️</div>
             <div class="card-title">Team Management</div>
             <ul>
-              <li><span class="li-text">Find team via search</span><span class="badge badge-public">Public</span></li>
-              <li><span class="li-text">View schedule &amp; results</span><span class="badge badge-public">Public</span></li>
-              <li><span class="li-text">Create or join a team</span></li>
-              <li><span class="li-text">Add staff &amp; community members</span></li>
-              <li><span class="li-text">Manage player roster</span></li>
-              <li><span class="li-text">Player RSVP for events</span></li>
+              <li>Find team via search</li>
+              <li>View schedule &amp; results</li>
+              <li>Create or join a team</li>
+              <li>Add staff &amp; community members</li>
+              <li>Manage player roster</li>
+              <li>Player RSVP for events</li>
             </ul>
           </div>
 
@@ -279,17 +279,17 @@
             <div class="card-title">Game Coverage</div>
             <div class="subsection-label" style="margin-top:0; border-top:none; padding-top:0;">Live</div>
             <ul>
-              <li><span class="li-text">Livestream (produce &amp; watch)</span><span class="badge badge-ctrl">Team-controlled</span></li>
-              <li><span class="li-text">Live game scoring</span></li>
-              <li><span class="li-text">Live play-by-play</span></li>
+              <li>Livestream (produce &amp; watch)</li>
+              <li>Live game scoring</li>
+              <li>Live play-by-play</li>
             </ul>
             <div class="subsection-label">Post-Game</div>
             <ul>
-              <li><span class="li-text">Full game replays</span><span class="badge badge-ctrl">Team-controlled</span></li>
-              <li><span class="li-text">Highlight clips</span></li>
-              <li><span class="li-text">AI-generated recaps</span></li>
-              <li><span class="li-text">Game &amp; player insights</span></li>
-              <li><span class="li-text">Player stats</span><span class="badge badge-ctrl">Team-controlled</span></li>
+              <li>Full game replays</li>
+              <li>Highlight clips</li>
+              <li>AI-generated recaps</li>
+              <li>Game &amp; player insights</li>
+              <li>Player stats</li>
             </ul>
           </div>
 
@@ -297,9 +297,9 @@
             <div class="card-icon">💬</div>
             <div class="card-title">Team Communication</div>
             <ul>
-              <li><span class="li-text">Team group chat</span><span class="badge badge-members">Members only</span></li>
-              <li><span class="li-text">Single shared thread per team</span></li>
-              <li><span class="li-text">Open to all team members</span></li>
+              <li>Team group chat</li>
+              <li>Single shared thread per team</li>
+              <li>Open to all team members</li>
             </ul>
           </div>
 
@@ -372,7 +372,7 @@
       </div>
     </div>
 
-    <!-- Visibility band -->
+    <!-- Visibility band (commented out)
     <div class="gap"></div>
     <div class="visibility-band">
       <div class="vis-band-header">Content Visibility &amp; Access Control</div>
@@ -420,6 +420,7 @@
 
       </div>
     </div>
+    -->
 
     <!-- Legend -->
     <div class="legend">
@@ -430,18 +431,6 @@
       <div class="legend-item">
         <div class="legend-dot" style="background:#ea580c;"></div>
         League / Tournament
-      </div>
-      <div class="legend-item">
-        <span class="badge badge-public" style="font-size:10px;">Public</span>
-        Visible to any app user
-      </div>
-      <div class="legend-item">
-        <span class="badge badge-ctrl" style="font-size:10px;">Team-controlled</span>
-        Visibility set per team
-      </div>
-      <div class="legend-item">
-        <span class="badge badge-members" style="font-size:10px;">Members only</span>
-        Confirmed team members
       </div>
       <div class="legend-item">
         <div class="legend-dot" style="background:#c5c9d6; border: 1px dashed #999;"></div>
