@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GC Next — "New" Indicator Exploration</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f0f4f8;
+    color: #1e293b;
+    padding: 40px 32px 80px;
+  }
+
+  h1 {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    font-size: 13px; color: #64748b; margin-bottom: 48px;
+  }
+
+  /* ── Section layout ── */
+  .option-section {
+    margin-bottom: 56px;
+  }
+  .option-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.2px; color: #94a3b8; margin-bottom: 6px;
+  }
+  .option-title {
+    font-size: 18px; font-weight: 700; letter-spacing: -0.3px;
+    margin-bottom: 4px;
+  }
+  .option-desc {
+    font-size: 12.5px; color: #64748b; margin-bottom: 20px;
+    max-width: 560px; line-height: 1.5;
+  }
+
+  /* ── Demo stage ── */
+  .demo-stage {
+    display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;
+  }
+  .demo-card {
+    background: #fff; border-radius: 14px; padding: 16px 18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07); min-width: 220px; flex: 1;
+    max-width: 340px;
+  }
+  .demo-card-label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: #94a3b8; margin-bottom: 10px;
+  }
+  /* Divider between demo card label and content */
+  .demo-card-label + * { padding-top: 4px; }
+
+  /* ── Functional area tile (mimics .func-area-tile) ── */
+  .func-area-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .func-area-tile {
+    background: var(--rbg, #f0f4ff);
+    color: var(--rc, #1e40af);
+    border-radius: 8px; padding: 7px 10px;
+    font-size: 11.5px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    position: relative;
+  }
+  .func-area-tile.existing { opacity: 0.7; }
+
+  /* ── List items (mimics pillar card ul li) ── */
+  .item-list {
+    list-style: none; display: flex; flex-direction: column; gap: 6px;
+  }
+  .item-list li {
+    font-size: 12px; color: #374151; padding-left: 12px;
+    position: relative; line-height: 1.45;
+  }
+  .item-list li::before {
+    content: "›"; position: absolute; left: 0;
+    color: #6366f1; font-weight: 700; top: 0;
+  }
+  .item-list li.existing { opacity: 0.65; }
+
+  /* ── Section card title ── */
+  .section-card-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: #475569; margin-bottom: 10px;
+  }
+
+  hr.divider {
+    border: none; border-top: 1px solid #e2e8f0;
+    margin: 0 0 16px;
+  }
+
+  /* ── COLOR VARS for pillars ── */
+  .ctx-connect  { --accent: #e11d48; --rc: #9f1239; --rbg: #fff1f5; }
+  .ctx-organize { --accent: #2563eb; --rc: #1e3a8a; --rbg: #eff6ff; }
+  .ctx-grow     { --accent: #d97706; --rc: #78350f; --rbg: #fffbeb; }
+  .ctx-celebrate{ --accent: #7c3aed; --rc: #4c1d95; --rbg: #f5f3ff; }
+
+  /* ════════════════════════════════════
+     OPTION A — Filled pill (baseline ref)
+  ════════════════════════════════════ */
+  .badge-a {
+    display: inline-block;
+    font-size: 8.5px; font-weight: 800; letter-spacing: 0.6px;
+    text-transform: uppercase;
+    background: #6366f1; color: #fff;
+    padding: 1.5px 6px; border-radius: 20px;
+    vertical-align: middle; line-height: 1.5;
+  }
+  .badge-a.green { background: #16a34a; }
+  .badge-a.amber { background: #d97706; }
+  .badge-a.red   { background: #e11d48; }
+
+  /* ════════════════════════════════════
+     OPTION B — Outlined pill
+  ════════════════════════════════════ */
+  .badge-b {
+    display: inline-block;
+    font-size: 8.5px; font-weight: 800; letter-spacing: 0.6px;
+    text-transform: uppercase;
+    border: 1.5px solid #6366f1; color: #6366f1;
+    padding: 1px 5.5px; border-radius: 20px;
+    vertical-align: middle; line-height: 1.5;
+    background: transparent;
+  }
+
+  /* ════════════════════════════════════
+     OPTION C — Corner ribbon (tile-level)
+  ════════════════════════════════════ */
+  .tile-ribbon-wrap { position: relative; overflow: hidden; }
+  .tile-ribbon {
+    position: absolute; top: 0; right: 0;
+    background: #6366f1; color: #fff;
+    font-size: 7px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+    padding: 2px 7px 2px 10px;
+    clip-path: polygon(8px 0%, 100% 0%, 100% 100%, 0% 100%);
+    line-height: 1.6;
+  }
+  .tile-ribbon.green { background: #16a34a; }
+
+  /* ════════════════════════════════════
+     OPTION D — Pulse dot
+  ════════════════════════════════════ */
+  .pulse-dot-wrap { position: relative; display: inline-flex; align-items: center; }
+  .pulse-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #6366f1; display: inline-block; flex-shrink: 0;
+    position: relative;
+  }
+  .pulse-dot::after {
+    content: "";
+    position: absolute; inset: -3px; border-radius: 50%;
+    background: rgba(99,102,241,0.25);
+    animation: pulse-ring 1.8s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    0%   { transform: scale(0.7); opacity: 0.8; }
+    70%  { transform: scale(1.6); opacity: 0; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  .pulse-dot.green { background: #16a34a; }
+  .pulse-dot.green::after { background: rgba(22,163,74,0.25); }
+  .pulse-dot.amber { background: #f59e0b; }
+  .pulse-dot.amber::after { background: rgba(245,158,11,0.25); }
+
+  /* ════════════════════════════════════
+     OPTION E — Left accent bar (tile)
+  ════════════════════════════════════ */
+  .tile-accent-bar {
+    border-left: 3px solid #6366f1 !important;
+    padding-left: 8px !important;
+  }
+  .tile-accent-bar.green { border-left-color: #16a34a !important; }
+
+  /* Same for list items */
+  .item-list li.accent-bar {
+    border-left: 2.5px solid #6366f1;
+    padding-left: 14px;
+    margin-left: -2px;
+  }
+
+  /* ════════════════════════════════════
+     OPTION F — Highlighted row/tile bg
+  ════════════════════════════════════ */
+  .tile-highlight {
+    background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(99,102,241,0.06)) !important;
+    border: 1px solid rgba(99,102,241,0.25) !important;
+  }
+  .item-list li.row-highlight {
+    background: rgba(99,102,241,0.07);
+    border-radius: 5px;
+    padding: 2px 8px 2px 16px;
+    margin-left: -8px;
+  }
+  .item-list li.row-highlight::before {
+    left: 8px;
+  }
+
+  /* ════════════════════════════════════
+     OPTION G — Sparkle / icon prefix
+  ════════════════════════════════════ */
+  .icon-prefix {
+    font-style: normal; font-size: 11px;
+    margin-right: 2px;
+  }
+
+  /* ════════════════════════════════════
+     OPTION H — Superscript dot / star
+  ════════════════════════════════════ */
+  .superscript-new {
+    vertical-align: super;
+    font-size: 7.5px; font-weight: 900;
+    color: #6366f1;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  /* ════════════════════════════════════
+     OPTION I — Stacked "NEW" line
+  ════════════════════════════════════ */
+  .new-line-tag {
+    display: block;
+    font-size: 8px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; color: #6366f1;
+    line-height: 1.2; margin-top: 1px;
+  }
+
+  /* ════════════════════════════════════
+     OPTION J — Ghost chip (tonal, no outline)
+  ════════════════════════════════════ */
+  .badge-j {
+    display: inline-block;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: #eef2ff; color: #4338ca;
+    padding: 1.5px 6px; border-radius: 4px;
+    vertical-align: middle; line-height: 1.5;
+  }
+  .badge-j.green { background: #dcfce7; color: #15803d; }
+  .badge-j.amber { background: #fef3c7; color: #b45309; }
+
+  /* ════════════════════════════════════
+     MINI PILLAR HEADERS (pillar pulse demos)
+  ════════════════════════════════════ */
+  .pillar-row-demo {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  .mini-pillar {
+    display: flex; flex-direction: column; align-items: center; gap: 0; width: 100%;
+  }
+  .mini-ph {
+    border-radius: 10px; padding: 14px 12px; text-align: center;
+    width: 100%; position: relative; color: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    overflow: hidden;
+  }
+  .mph-icon  { font-size: 20px; margin-bottom: 5px; }
+  .mph-name  { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .mph-sub   { font-size: 9px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; opacity: 0.55; margin-top: 2px; }
+  .mph-tag   {
+    position: absolute; top: 8px; right: 9px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.4px;
+    background: rgba(255,255,255,0.22); color: #fff;
+    padding: 1.5px 6px; border-radius: 7px;
+    text-transform: uppercase;
+  }
+  .mph-organize  { background: #2563eb; box-shadow: 0 4px 16px rgba(37,99,235,0.30); }
+  .mph-connect   { background: #e11d48; box-shadow: 0 4px 16px rgba(225,29,72,0.30); }
+  .mph-celebrate { background: linear-gradient(135deg, #7c3aed, #db2777); box-shadow: 0 4px 16px rgba(124,58,237,0.30); }
+  .mph-grow      { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(245,158,11,0.35); }
+
+  .mini-body {
+    width: 100%; margin-top: 6px;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .mini-tile {
+    background: var(--rbg, #f0f4ff);
+    color: var(--rc, #1e40af);
+    border-radius: 6px; padding: 5px 8px;
+    font-size: 10.5px; font-weight: 600;
+    display: flex; align-items: center; gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  /* ── K: Shadow breathe ── */
+  @keyframes shadow-breathe-celebrate {
+    0%, 100% { box-shadow: 0 4px 16px rgba(124,58,237,0.30); }
+    50%       { box-shadow: 0 6px 32px rgba(124,58,237,0.70), 0 0 0 4px rgba(124,58,237,0.18); }
+  }
+  @keyframes shadow-breathe-grow {
+    0%, 100% { box-shadow: 0 4px 14px rgba(245,158,11,0.35); }
+    50%       { box-shadow: 0 6px 32px rgba(245,158,11,0.72), 0 0 0 4px rgba(245,158,11,0.20); }
+  }
+  .pulse-shadow-celebrate { animation: shadow-breathe-celebrate 2.8s ease-in-out infinite; }
+  .pulse-shadow-grow      { animation: shadow-breathe-grow      2.8s ease-in-out infinite 0.6s; }
+
+  /* ── L: Sonar ring ── */
+  .sonar-wrap { position: relative; }
+  .sonar-wrap .mini-ph { position: relative; z-index: 1; }
+  @keyframes sonar-ring {
+    0%   { transform: scale(1);    opacity: 0.7; }
+    80%  { transform: scale(1.18); opacity: 0; }
+    100% { transform: scale(1.18); opacity: 0; }
+  }
+  .sonar-celebrate::after,
+  .sonar-grow::after {
+    content: "";
+    position: absolute; inset: 0; border-radius: 10px;
+    animation: sonar-ring 2.4s ease-out infinite;
+    pointer-events: none;
+  }
+  .sonar-celebrate::after { background: rgba(124,58,237,0.35); }
+  .sonar-grow::after      { background: rgba(245,158,11,0.38); animation-delay: 0.5s; }
+
+  /* ── M: Border pulse ── */
+  @keyframes border-pulse {
+    0%, 100% { outline: 2.5px solid transparent;        outline-offset: 0px; }
+    50%       { outline: 2.5px solid rgba(255,255,255,0.65); outline-offset: 3px; }
+  }
+  .border-pulse-celebrate,
+  .border-pulse-grow {
+    animation: border-pulse 2.6s ease-in-out infinite;
+  }
+  .border-pulse-grow { animation-delay: 0.7s; }
+
+  /* ── N: Shimmer sweep ── */
+  @keyframes shimmer-sweep {
+    0%   { background-position: -200% center; }
+    100% { background-position: 300% center; }
+  }
+  .shimmer {
+    background-size: 200% 100%;
+    animation: shimmer-sweep 3.2s linear infinite;
+  }
+  .mph-celebrate.shimmer {
+    background-image: linear-gradient(
+      105deg,
+      #7c3aed 0%, #7c3aed 30%,
+      rgba(255,255,255,0.30) 45%,
+      rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0.30) 55%,
+      #db2777 70%, #db2777 100%
+    );
+    background-size: 300% 100%;
+  }
+  .mph-grow.shimmer {
+    background-image: linear-gradient(
+      105deg,
+      #f59e0b 0%, #f59e0b 30%,
+      rgba(255,255,255,0.30) 45%,
+      rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0.30) 55%,
+      #d97706 70%, #d97706 100%
+    );
+    background-size: 300% 100%;
+    animation-delay: 0.8s;
+  }
+
+  /* ── P: Double ring ── */
+  .double-ring-wrap {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .double-ring-1,
+  .double-ring-2 {
+    position: absolute; inset: 0; border-radius: 10px;
+    pointer-events: none;
+  }
+  @keyframes ring-expand {
+    0%   { transform: scale(1);    opacity: 0.55; }
+    80%  { transform: scale(1.22); opacity: 0; }
+    100% { transform: scale(1.22); opacity: 0; }
+  }
+  .dr-celebrate { background: rgba(124,58,237,0.32); }
+  .dr-grow      { background: rgba(245,158,11,0.35); }
+  .double-ring-1 { animation: ring-expand 2.6s ease-out infinite; }
+  .double-ring-2 { animation: ring-expand 2.6s ease-out infinite 0.5s; }
+
+  /* ── Comparison table ── */
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px; margin-top: 20px;
+  }
+  .cmp-cell {
+    background: #fff; border-radius: 10px; padding: 14px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    font-size: 11px; color: #475569;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .cmp-cell strong { font-size: 13px; color: #1e293b; }
+  .cmp-cell .cmp-rating {
+    display: flex; gap: 3px; margin-top: 2px;
+  }
+  .cmp-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .cmp-dot.on  { background: #6366f1; }
+  .cmp-dot.off { background: #e2e8f0; }
+
+  /* ── Section break ── */
+  .section-break {
+    border: none; border-top: 2px solid #e2e8f0;
+    margin: 64px 0 48px;
+  }
+
+</style>
+</head>
+<body>
+
+<h1>GC Next — "New" Indicator Options</h1>
+<p class="page-subtitle">Visual exploration for labeling new features on individual items within the product map. Shown in context across functional area tiles and list items.</p>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION A — Filled pill badge
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option A</div>
+  <div class="option-title">Filled pill badge</div>
+  <div class="option-desc">A compact, fully filled badge — readable and familiar. Works well inline next to text. Color variants let you choose a neutral or a brand accent. The current "NEW" tag on Celebrate uses a looser version of this idea but floated/absolute-positioned on a colored header.</div>
+
+  <div class="demo-stage">
+    <!-- Tile context -->
+    <div class="demo-card ctx-connect">
+      <div class="demo-card-label">Functional area tiles — Connect</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Livestream</div>
+        <div class="func-area-tile existing">Score &amp; Track</div>
+        <div class="func-area-tile">Watch Live <span class="badge-a">New</span></div>
+        <div class="func-area-tile">Highlights <span class="badge-a">New</span></div>
+        <div class="func-area-tile existing">Game Results</div>
+        <div class="func-area-tile existing">Replays</div>
+      </div>
+    </div>
+
+    <!-- List context -->
+    <div class="demo-card ctx-grow">
+      <div class="demo-card-label">List items — Grow</div>
+      <hr class="divider">
+      <div class="section-card-title">Coverage-Driven Content</div>
+      <ul class="item-list">
+        <li class="existing">Player clips &amp; highlights</li>
+        <li>Stats across all teams &amp; seasons <span class="badge-a green">New</span></li>
+        <li>Fed automatically from game coverage <span class="badge-a green">New</span></li>
+        <li class="existing">Season summary</li>
+      </ul>
+    </div>
+
+    <!-- Color variants card -->
+    <div class="demo-card">
+      <div class="demo-card-label">Color variants</div>
+      <hr class="divider">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:12.5px; color:#374151;">Indigo (brand) <span class="badge-a">New</span></div>
+        <div style="font-size:12.5px; color:#374151;">Green (positive) <span class="badge-a green">New</span></div>
+        <div style="font-size:12.5px; color:#374151;">Amber (highlight) <span class="badge-a amber">New</span></div>
+        <div style="font-size:12.5px; color:#374151;">Rose (action) <span class="badge-a red">New</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION B — Outlined pill badge
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option B</div>
+  <div class="option-title">Outlined pill badge</div>
+  <div class="option-desc">Same shape as A but open/ghost style — lighter visual weight. Feels less like an alert, more like a label. Reads well on white card backgrounds. Could feel subtle enough to pair with colored tile backgrounds.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-celebrate">
+      <div class="demo-card-label">Functional area tiles — Celebrate</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Top Plays</div>
+        <div class="func-area-tile">Highlight Reels <span class="badge-b">New</span></div>
+        <div class="func-area-tile">Standout Statlines <span class="badge-b">New</span></div>
+        <div class="func-area-tile existing">Photo Galleries</div>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-organize">
+      <div class="demo-card-label">List items — Organize</div>
+      <hr class="divider">
+      <div class="section-card-title">Registration</div>
+      <ul class="item-list">
+        <li class="existing">Team Registration</li>
+        <li>League Registration <span class="badge-b">New</span></li>
+        <li>Club Management <span class="badge-b">New</span></li>
+        <li class="existing">Tournament Brackets</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION C — Corner ribbon on tiles
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option C</div>
+  <div class="option-title">Corner ribbon (tiles only)</div>
+  <div class="option-desc">A classic "new" treatment from e-commerce/app stores. Works exclusively on tile-shaped elements — the small triangular banner pulls the eye immediately. Not applicable to inline list items without awkward overflow. Best for functional area tiles.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-connect">
+      <div class="demo-card-label">Functional area tiles — Connect</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Livestream</div>
+        <div class="func-area-tile tile-ribbon-wrap">
+          Watch Live
+          <span class="tile-ribbon">New</span>
+        </div>
+        <div class="func-area-tile tile-ribbon-wrap">
+          AI Recaps
+          <span class="tile-ribbon green">New</span>
+        </div>
+        <div class="func-area-tile existing">Score &amp; Track</div>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card-label">Note</div>
+      <hr class="divider">
+      <p style="font-size:12px; color:#64748b; line-height:1.55;">Ribbons are visually punchy but only work on rectangular tiles with overflow:hidden. Not suitable for list items or inline text. Consider pairing with a different treatment for list-level items if you use this for tiles.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION D — Pulse dot
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option D</div>
+  <div class="option-title">Pulse dot</div>
+  <div class="option-desc">An animated dot with a soft ripple — subtle motion draws attention without adding text. Works well for items where you want the "new" signal to be felt rather than read. Can feel app-like and modern. The animation can be turned off if the map is exported or printed.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-grow">
+      <div class="demo-card-label">Functional area tiles — Grow</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Multi-sport career view</div>
+        <div class="func-area-tile" style="gap:8px;">
+          <span class="pulse-dot green"></span> Public Profile
+        </div>
+        <div class="func-area-tile" style="gap:8px;">
+          <span class="pulse-dot green"></span> Milestones
+        </div>
+        <div class="func-area-tile existing">Player Clips</div>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-celebrate">
+      <div class="demo-card-label">List items — Celebrate</div>
+      <hr class="divider">
+      <div class="section-card-title">Key Concepts</div>
+      <ul class="item-list">
+        <li class="existing">Public content feed from game coverage</li>
+        <li style="display:flex; align-items:center; gap:7px; padding-left:0;">
+          <span class="pulse-dot" style="flex-shrink:0;"></span>
+          <span>Reactions only — no comments</span>
+        </li>
+        <li style="display:flex; align-items:center; gap:7px; padding-left:0;">
+          <span class="pulse-dot" style="flex-shrink:0;"></span>
+          <span>Social sharing back to feed</span>
+        </li>
+        <li class="existing">Team public page discovery</li>
+      </ul>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card-label">Dot color variants</div>
+      <hr class="divider">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; align-items:center; gap:10px; font-size:12.5px; color:#374151;">
+          <span class="pulse-dot"></span> Indigo / brand
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; font-size:12.5px; color:#374151;">
+          <span class="pulse-dot green"></span> Green / launch
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; font-size:12.5px; color:#374151;">
+          <span class="pulse-dot amber"></span> Amber / watch
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION E — Left accent bar
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option E</div>
+  <div class="option-title">Left accent bar</div>
+  <div class="option-desc">A flush left border stripe. Very space-efficient — adds no horizontal width to tiles, no inline text clutter on list items. Communicates "this row is different" cleanly. Works for both tiles and list items but may be too subtle as a standalone signal; usually pairs with another indicator.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-connect">
+      <div class="demo-card-label">Functional area tiles — Connect</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Livestream</div>
+        <div class="func-area-tile tile-accent-bar">Watch Live</div>
+        <div class="func-area-tile tile-accent-bar">AI Highlights</div>
+        <div class="func-area-tile existing">Score &amp; Track</div>
+        <div class="func-area-tile existing">Replays</div>
+        <div class="func-area-tile tile-accent-bar green">AI Recaps</div>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-organize">
+      <div class="demo-card-label">List items — Organize</div>
+      <hr class="divider">
+      <div class="section-card-title">League Management</div>
+      <ul class="item-list">
+        <li class="existing">Create league schedules</li>
+        <li class="accent-bar">Cross-team registration</li>
+        <li class="accent-bar">Club affiliation tracking</li>
+        <li class="existing">Score on behalf of teams</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION F — Highlighted row / tile background
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option F</div>
+  <div class="option-title">Highlighted background</div>
+  <div class="option-desc">The whole tile or row item gets a tinted background and subtle border. Works well if you want "new" to be visually grouped and easy to scan at a glance — the eye reads the colored region, not a small badge. Can feel a bit loud if many items are new.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-grow">
+      <div class="demo-card-label">Functional area tiles — Grow</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Player clips</div>
+        <div class="func-area-tile tile-highlight">Public Profile</div>
+        <div class="func-area-tile tile-highlight">Milestones</div>
+        <div class="func-area-tile existing">Career stats</div>
+        <div class="func-area-tile tile-highlight">Gear showcase</div>
+        <div class="func-area-tile existing">Highlights reel</div>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-celebrate">
+      <div class="demo-card-label">List items — Celebrate</div>
+      <hr class="divider">
+      <div class="section-card-title">Key Concepts</div>
+      <ul class="item-list">
+        <li class="existing">Public content feed from game coverage</li>
+        <li class="row-highlight">Reactions only — no comments</li>
+        <li class="row-highlight">Social sharing back to feed</li>
+        <li class="existing">Team public page discovery</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION G — Emoji / icon prefix
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option G</div>
+  <div class="option-title">Icon / emoji prefix</div>
+  <div class="option-desc">A small icon or emoji before the label carries the "new" signal through symbol rather than text. ✦ (black four-pointed star) or ⊕ convey "added" and "new" without reading "NEW". Can feel fresh and modern. Risk: may not scan as clearly as text to all viewers.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-connect">
+      <div class="demo-card-label">Functional area tiles — Connect</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Livestream</div>
+        <div class="func-area-tile"><em class="icon-prefix" style="color:#6366f1;">✦</em> Watch Live</div>
+        <div class="func-area-tile"><em class="icon-prefix" style="color:#6366f1;">✦</em> AI Highlights</div>
+        <div class="func-area-tile existing">Score &amp; Track</div>
+      </div>
+      <div style="margin-top:12px;" class="func-area-grid">
+        <div class="func-area-tile existing">Game Results</div>
+        <div class="func-area-tile"><em class="icon-prefix" style="color:#16a34a;">⊕</em> AI Recaps</div>
+        <div class="func-area-tile"><em class="icon-prefix" style="color:#e11d48;">★</em> Featured</div>
+        <div class="func-area-tile existing">Replays</div>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-grow">
+      <div class="demo-card-label">List items — Grow (three icon styles)</div>
+      <hr class="divider">
+      <div class="section-card-title">Optional User Contributions</div>
+      <ul class="item-list">
+        <li class="existing">Photos &amp; videos</li>
+        <li><em class="icon-prefix" style="color:#6366f1; font-style:normal;">✦</em> Milestones &amp; achievements</li>
+        <li><em class="icon-prefix" style="color:#6366f1; font-style:normal;">✦</em> Gear showcase</li>
+        <li><em class="icon-prefix" style="color:#16a34a; font-style:normal;">⊕</em> Coach endorsements</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION H — Superscript marker
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option H</div>
+  <div class="option-title">Superscript dot or star</div>
+  <div class="option-desc">An unobtrusive raised dot (•) or star (✦) after the label — minimal visual interruption. The least disruptive option; the viewer only notices on close reading. Works well if you want the map to look clean from a distance but reveal detail on inspection.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-celebrate">
+      <div class="demo-card-label">Functional area tiles — Celebrate</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Top Plays</div>
+        <div class="func-area-tile">Highlight Reels<sup class="superscript-new">✦</sup></div>
+        <div class="func-area-tile">Statlines<sup class="superscript-new">✦</sup></div>
+        <div class="func-area-tile existing">Photo Galleries</div>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-grow">
+      <div class="demo-card-label">List items — Grow</div>
+      <hr class="divider">
+      <div class="section-card-title">The Profile</div>
+      <ul class="item-list">
+        <li>Multi-sport career view<sup class="superscript-new" style="color:#d97706;">✦</sup></li>
+        <li>Connected to all teams<sup class="superscript-new" style="color:#d97706;">✦</sup></li>
+        <li class="existing">Private by default</li>
+        <li>Opt-in public profile<sup class="superscript-new" style="color:#d97706;">✦</sup></li>
+      </ul>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card-label">Note</div>
+      <hr class="divider">
+      <p style="font-size:12px; color:#64748b; line-height:1.55;">Legend/footnote required to decode the marker — add a small key near the diagram bottom. Most subtle option in this set. Good for audiences who scan first, read second.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION I — "NEW" as stacked sub-label
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option I</div>
+  <div class="option-title">Stacked "New" sub-label</div>
+  <div class="option-desc">The word "NEW" appears below the item label as a second line — no badge shape, just colored type. Keeps the tile text clean while making the label explicit. Matches the typographic character of the diagram rather than adding a foreign UI element.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-connect">
+      <div class="demo-card-label">Functional area tiles — Connect</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Livestream</div>
+        <div class="func-area-tile" style="flex-direction:column; align-items:flex-start; gap:1px;">
+          Watch Live
+          <span class="new-line-tag">New</span>
+        </div>
+        <div class="func-area-tile" style="flex-direction:column; align-items:flex-start; gap:1px;">
+          AI Highlights
+          <span class="new-line-tag">New</span>
+        </div>
+        <div class="func-area-tile existing">Score &amp; Track</div>
+        <div class="func-area-tile" style="flex-direction:column; align-items:flex-start; gap:1px;">
+          AI Recaps
+          <span class="new-line-tag" style="color:#16a34a;">New</span>
+        </div>
+        <div class="func-area-tile existing">Replays</div>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-organize">
+      <div class="demo-card-label">Note</div>
+      <hr class="divider">
+      <p style="font-size:12px; color:#64748b; line-height:1.55;">Works best on tiles with vertical flex layout. On list items it would require wrapping the li content in a flex column, which adds markup complexity. Consider for tiles only, pair with Option A/B for list items.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     OPTION J — Tonal / ghost chip (no border)
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Option J</div>
+  <div class="option-title">Tonal chip (no outline)</div>
+  <div class="option-desc">A filled badge but with a light, desaturated background and matching text color — the "tonal" chip pattern from Material Design. Reads clearly as a badge without the visual weight of a full-color fill. Very readable on both white card backgrounds and colored tiles. Recommended as a strong baseline candidate.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-connect">
+      <div class="demo-card-label">Functional area tiles — Connect</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Livestream</div>
+        <div class="func-area-tile">Watch Live <span class="badge-j">New</span></div>
+        <div class="func-area-tile">AI Highlights <span class="badge-j">New</span></div>
+        <div class="func-area-tile existing">Score &amp; Track</div>
+        <div class="func-area-tile">AI Recaps <span class="badge-j green">New</span></div>
+        <div class="func-area-tile existing">Replays</div>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-grow">
+      <div class="demo-card-label">List items — Grow</div>
+      <hr class="divider">
+      <div class="section-card-title">Coverage-Driven Content</div>
+      <ul class="item-list">
+        <li class="existing">Player clips &amp; highlights</li>
+        <li>Stats across all teams &amp; seasons <span class="badge-j">New</span></li>
+        <li>Fed automatically from coverage <span class="badge-j">New</span></li>
+        <li class="existing">Season summary</li>
+      </ul>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card-label">Color variants</div>
+      <hr class="divider">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:12.5px; color:#374151;">Indigo tonal <span class="badge-j">New</span></div>
+        <div style="font-size:12.5px; color:#374151;">Green tonal <span class="badge-j green">New</span></div>
+        <div style="font-size:12.5px; color:#374151;">Amber tonal <span class="badge-j amber">New</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-break">
+
+<!-- ══════════════════════════════════════════════════════
+     COMBINATION — Recommended pairing
+════════════════════════════════════════════════════════ -->
+<div class="option-section">
+  <div class="option-label">Combination</div>
+  <div class="option-title">Suggested pairing: J (tonal chip) + D (pulse dot)</div>
+  <div class="option-desc">Tonal chip for tiles and inline list items — readable, space-efficient, low-noise. Pulse dot for feature areas that are especially high-emphasis or where motion helps (Celebrate, Grow). The two can coexist without visual conflict because they occupy different semantic roles.</div>
+
+  <div class="demo-stage">
+    <div class="demo-card ctx-celebrate" style="max-width:360px;">
+      <div class="demo-card-label">Celebrate pillar — combination</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile existing">Top Plays</div>
+        <div class="func-area-tile" style="gap:8px;">
+          <span class="pulse-dot"></span> Highlight Reels <span class="badge-j">New</span>
+        </div>
+        <div class="func-area-tile" style="gap:8px;">
+          <span class="pulse-dot"></span> Standout Statlines <span class="badge-j">New</span>
+        </div>
+        <div class="func-area-tile existing">Photo Galleries</div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="section-card-title">Key Concepts</div>
+        <ul class="item-list">
+          <li class="existing">Public feed from game coverage</li>
+          <li>Reactions only — no comments <span class="badge-j">New</span></li>
+          <li>Social sharing back to feed <span class="badge-j">New</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="demo-card ctx-grow" style="max-width:360px;">
+      <div class="demo-card-label">Grow pillar — combination</div>
+      <hr class="divider">
+      <div class="func-area-grid">
+        <div class="func-area-tile" style="gap:8px;">
+          <span class="pulse-dot green"></span> Public profile <span class="badge-j green">New</span>
+        </div>
+        <div class="func-area-tile existing">Player clips</div>
+        <div class="func-area-tile existing">Career stats</div>
+        <div class="func-area-tile" style="gap:8px;">
+          <span class="pulse-dot green"></span> Gear showcase <span class="badge-j green">New</span>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="section-card-title">The Profile</div>
+        <ul class="item-list">
+          <li>Multi-sport career view <span class="badge-j green">New</span></li>
+          <li>Opt-in public profile <span class="badge-j green">New</span></li>
+          <li class="existing">Private by default</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PILLAR PULSE EFFECTS
+════════════════════════════════════════════════════════ -->
+<hr class="section-break">
+
+<div class="option-section">
+  <div class="option-label">Pillar-level effects</div>
+  <div class="option-title">Pulsing treatments for new &amp; elevated pillars</div>
+  <div class="option-desc">These effects apply to the pillar header card itself — Celebrate (New) and Grow (Elevated). Each row shows all four pillars side by side so you can judge how the marked ones read against the unmarked ones. Organize and Connect are shown at rest as reference. Celebrate and Grow carry the pulse treatment.</div>
+</div>
+
+<!-- ── K: Shadow breathe ── -->
+<div class="option-section">
+  <div class="option-label">Option K</div>
+  <div class="option-title">Shadow breathe</div>
+  <div class="option-desc">The pillar's existing colored box-shadow slowly expands and contracts — like the card is breathing. Uses the pillar's own accent color so it reads as "alive" rather than jarring. The subtlest pillar-level motion; barely perceptible at rest but noticeable on the page.</div>
+  <div class="demo-stage pillar-row-demo">
+    <div class="mini-pillar">
+      <div class="mini-ph mph-organize">
+        <div class="mph-icon">📋</div>
+        <div class="mph-name">Organize</div>
+        <div class="mph-sub">PILLAR 1</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-connect">
+        <div class="mph-icon">📡</div>
+        <div class="mph-name">Connect</div>
+        <div class="mph-sub">PILLAR 2</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-celebrate pulse-shadow-celebrate">
+        <div class="mph-icon">👏</div>
+        <div class="mph-name">Celebrate</div>
+        <div class="mph-sub">PILLAR 3</div>
+        <div class="mph-tag">NEW</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-grow pulse-shadow-grow">
+        <div class="mph-icon">🌱</div>
+        <div class="mph-name">Grow</div>
+        <div class="mph-sub">PILLAR 4</div>
+        <div class="mph-tag">ELEVATED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── L: Expanding ring (sonar) ── -->
+<div class="option-section">
+  <div class="option-label">Option L</div>
+  <div class="option-title">Expanding ring (sonar)</div>
+  <div class="option-desc">A ring expands outward from the pillar card edge and fades to nothing — like a sonar ping. Draws the eye strongly on first load, then repeats at a slow cadence. More active than the shadow breathe; good for diagrams where these pillars need to read as "launch" items.</div>
+  <div class="demo-stage pillar-row-demo">
+    <div class="mini-pillar">
+      <div class="mini-ph mph-organize">
+        <div class="mph-icon">📋</div>
+        <div class="mph-name">Organize</div>
+        <div class="mph-sub">PILLAR 1</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-connect">
+        <div class="mph-icon">📡</div>
+        <div class="mph-name">Connect</div>
+        <div class="mph-sub">PILLAR 2</div>
+      </div>
+    </div>
+    <div class="mini-pillar sonar-wrap">
+      <div class="mini-ph mph-celebrate sonar-celebrate">
+        <div class="mph-icon">👏</div>
+        <div class="mph-name">Celebrate</div>
+        <div class="mph-sub">PILLAR 3</div>
+        <div class="mph-tag">NEW</div>
+      </div>
+    </div>
+    <div class="mini-pillar sonar-wrap">
+      <div class="mini-ph mph-grow sonar-grow">
+        <div class="mph-icon">🌱</div>
+        <div class="mph-name">Grow</div>
+        <div class="mph-sub">PILLAR 4</div>
+        <div class="mph-tag">ELEVATED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── M: Gradient border pulse ── -->
+<div class="option-section">
+  <div class="option-label">Option M</div>
+  <div class="option-title">Gradient border pulse</div>
+  <div class="option-desc">An animated outer border ring fades in and out — a crisp stroke rather than a soft glow. Uses a white semi-transparent ring that appears and disappears, giving the card a lit-up feeling on repeat. Feels precise and intentional without dominating.</div>
+  <div class="demo-stage pillar-row-demo">
+    <div class="mini-pillar">
+      <div class="mini-ph mph-organize">
+        <div class="mph-icon">📋</div>
+        <div class="mph-name">Organize</div>
+        <div class="mph-sub">PILLAR 1</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-connect">
+        <div class="mph-icon">📡</div>
+        <div class="mph-name">Connect</div>
+        <div class="mph-sub">PILLAR 2</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-celebrate border-pulse-celebrate">
+        <div class="mph-icon">👏</div>
+        <div class="mph-name">Celebrate</div>
+        <div class="mph-sub">PILLAR 3</div>
+        <div class="mph-tag">NEW</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-grow border-pulse-grow">
+        <div class="mph-icon">🌱</div>
+        <div class="mph-name">Grow</div>
+        <div class="mph-sub">PILLAR 4</div>
+        <div class="mph-tag">ELEVATED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── N: Shimmer sweep ── -->
+<div class="option-section">
+  <div class="option-label">Option N</div>
+  <div class="option-title">Shimmer sweep</div>
+  <div class="option-desc">A highlight band sweeps across the card from left to right, like light catching a glossy surface. Feels polished and product-quality — closer to how app stores or dashboards signal "new" on premium content. More stylized than the other options; may feel overly app-like for an architecture document.</div>
+  <div class="demo-stage pillar-row-demo">
+    <div class="mini-pillar">
+      <div class="mini-ph mph-organize">
+        <div class="mph-icon">📋</div>
+        <div class="mph-name">Organize</div>
+        <div class="mph-sub">PILLAR 1</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-connect">
+        <div class="mph-icon">📡</div>
+        <div class="mph-name">Connect</div>
+        <div class="mph-sub">PILLAR 2</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-celebrate shimmer">
+        <div class="mph-icon">👏</div>
+        <div class="mph-name">Celebrate</div>
+        <div class="mph-sub">PILLAR 3</div>
+        <div class="mph-tag">NEW</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-grow shimmer">
+        <div class="mph-icon">🌱</div>
+        <div class="mph-name">Grow</div>
+        <div class="mph-sub">PILLAR 4</div>
+        <div class="mph-tag">ELEVATED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── P: Double ring (cascade) ── -->
+<div class="option-section">
+  <div class="option-label">Option P</div>
+  <div class="option-title">Double ring cascade</div>
+  <div class="option-desc">Two concentric rings expand outward in sequence — a 0.4s offset between them creates a cascade effect, like ripples from a stone in water. More dramatic than a single ring. Strong first-load impression; works well if these two pillars are genuinely the most important story on the diagram.</div>
+  <div class="demo-stage pillar-row-demo">
+    <div class="mini-pillar">
+      <div class="mini-ph mph-organize">
+        <div class="mph-icon">📋</div>
+        <div class="mph-name">Organize</div>
+        <div class="mph-sub">PILLAR 1</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-connect">
+        <div class="mph-icon">📡</div>
+        <div class="mph-name">Connect</div>
+        <div class="mph-sub">PILLAR 2</div>
+      </div>
+    </div>
+    <div class="mini-pillar double-ring-wrap">
+      <div class="double-ring-1 dr-celebrate"></div>
+      <div class="double-ring-2 dr-celebrate"></div>
+      <div class="mini-ph mph-celebrate" style="position:relative; z-index:1;">
+        <div class="mph-icon">👏</div>
+        <div class="mph-name">Celebrate</div>
+        <div class="mph-sub">PILLAR 3</div>
+        <div class="mph-tag">NEW</div>
+      </div>
+    </div>
+    <div class="mini-pillar double-ring-wrap">
+      <div class="double-ring-1 dr-grow"></div>
+      <div class="double-ring-2 dr-grow"></div>
+      <div class="mini-ph mph-grow" style="position:relative; z-index:1;">
+        <div class="mph-icon">🌱</div>
+        <div class="mph-name">Grow</div>
+        <div class="mph-sub">PILLAR 4</div>
+        <div class="mph-tag">ELEVATED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Q: Combined — shadow breathe + tonal chip ── -->
+<div class="option-section">
+  <div class="option-label">Option Q</div>
+  <div class="option-title">Combined: shadow breathe + tonal chip on sub-items</div>
+  <div class="option-desc">The pillar header breathes (Option K) while the items inside it carry tonal chips (Option J). Two levels of signal — the header tells you "this whole pillar is new," the chips tell you "this specific feature is new." The two signals are complementary, not competing.</div>
+  <div class="demo-stage pillar-row-demo">
+    <div class="mini-pillar">
+      <div class="mini-ph mph-organize">
+        <div class="mph-icon">📋</div>
+        <div class="mph-name">Organize</div>
+        <div class="mph-sub">PILLAR 1</div>
+      </div>
+      <div class="mini-body">
+        <div class="mini-tile">Team Mgmt</div>
+        <div class="mini-tile">League Mgmt</div>
+        <div class="mini-tile">Registration</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-connect">
+        <div class="mph-icon">📡</div>
+        <div class="mph-name">Connect</div>
+        <div class="mph-sub">PILLAR 2</div>
+      </div>
+      <div class="mini-body">
+        <div class="mini-tile">Livestream</div>
+        <div class="mini-tile">Score &amp; Track</div>
+        <div class="mini-tile">Replays</div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-celebrate pulse-shadow-celebrate">
+        <div class="mph-icon">👏</div>
+        <div class="mph-name">Celebrate</div>
+        <div class="mph-sub">PILLAR 3</div>
+        <div class="mph-tag">NEW</div>
+      </div>
+      <div class="mini-body" style="--accent:#7c3aed;">
+        <div class="mini-tile mini-tile-new">Top Plays <span class="badge-j">New</span></div>
+        <div class="mini-tile mini-tile-new">Highlights <span class="badge-j">New</span></div>
+        <div class="mini-tile mini-tile-new">Statlines <span class="badge-j">New</span></div>
+      </div>
+    </div>
+    <div class="mini-pillar">
+      <div class="mini-ph mph-grow pulse-shadow-grow">
+        <div class="mph-icon">🌱</div>
+        <div class="mph-name">Grow</div>
+        <div class="mph-sub">PILLAR 4</div>
+        <div class="mph-tag">ELEVATED</div>
+      </div>
+      <div class="mini-body" style="--accent:#d97706;">
+        <div class="mini-tile">Player Clips</div>
+        <div class="mini-tile mini-tile-new" style="--rbg:#fef3c7;--rc:#78350f;">Public Profile <span class="badge-j amber">New</span></div>
+        <div class="mini-tile">Career Stats</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     QUICK REFERENCE SUMMARY
+════════════════════════════════════════════════════════ -->
+<hr class="section-break">
+
+<div class="option-section">
+  <div class="option-label">Summary</div>
+  <div class="option-title">At a glance</div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px; color:#374151; min-width:640px;">
+      <thead>
+        <tr style="background:#f1f5f9; text-align:left;">
+          <th style="padding:10px 12px; font-weight:700; color:#475569; border-bottom:2px solid #e2e8f0;">Option</th>
+          <th style="padding:10px 12px; font-weight:700; color:#475569; border-bottom:2px solid #e2e8f0;">Works on tiles</th>
+          <th style="padding:10px 12px; font-weight:700; color:#475569; border-bottom:2px solid #e2e8f0;">Works on list items</th>
+          <th style="padding:10px 12px; font-weight:700; color:#475569; border-bottom:2px solid #e2e8f0;">Visual weight</th>
+          <th style="padding:10px 12px; font-weight:700; color:#475569; border-bottom:2px solid #e2e8f0;">Requires legend</th>
+          <th style="padding:10px 12px; font-weight:700; color:#475569; border-bottom:2px solid #e2e8f0;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 12px; font-weight:600;">A — Filled pill</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">✓</td>
+          <td style="padding:9px 12px;">High</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Familiar; can compete with colored tiles</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9; background:#fafafa;">
+          <td style="padding:9px 12px; font-weight:600;">B — Outlined pill</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">✓</td>
+          <td style="padding:9px 12px;">Medium</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Lighter feel; better on white backgrounds</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 12px; font-weight:600;">C — Corner ribbon</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">—</td>
+          <td style="padding:9px 12px;">High</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Tiles only; classic "new" signifier</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9; background:#fafafa;">
+          <td style="padding:9px 12px; font-weight:600;">D — Pulse dot</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">✓</td>
+          <td style="padding:9px 12px;">Low–Med</td><td style="padding:9px 12px;">Recommended</td>
+          <td style="padding:9px 12px; color:#64748b;">Animated; modern; pairs well with others</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 12px; font-weight:600;">E — Left bar</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">✓</td>
+          <td style="padding:9px 12px;">Low</td><td style="padding:9px 12px;">Recommended</td>
+          <td style="padding:9px 12px; color:#64748b;">Subtle; usually needs a pairing treatment</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9; background:#fafafa;">
+          <td style="padding:9px 12px; font-weight:600;">F — Row highlight</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">✓</td>
+          <td style="padding:9px 12px;">Medium</td><td style="padding:9px 12px;">Recommended</td>
+          <td style="padding:9px 12px; color:#64748b;">Good for scanning; noisy if many items</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 12px; font-weight:600;">G — Icon prefix</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">✓</td>
+          <td style="padding:9px 12px;">Low–Med</td><td style="padding:9px 12px;">Recommended</td>
+          <td style="padding:9px 12px; color:#64748b;">Fresh feel; symbol choice matters</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9; background:#fafafa;">
+          <td style="padding:9px 12px; font-weight:600;">H — Superscript</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">✓</td>
+          <td style="padding:9px 12px;">Very low</td><td style="padding:9px 12px;">Required</td>
+          <td style="padding:9px 12px; color:#64748b;">Most minimal; good for dense diagrams</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 12px; font-weight:600;">I — Stacked label</td>
+          <td style="padding:9px 12px;">✓</td><td style="padding:9px 12px;">Awkward</td>
+          <td style="padding:9px 12px;">Low</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Typographic; tiles only in practice</td>
+        </tr>
+        <tr style="background:#eef2ff;">
+          <td style="padding:9px 12px; font-weight:700; color:#3730a3;">J — Tonal chip ★</td>
+          <td style="padding:9px 12px; font-weight:600;">✓</td><td style="padding:9px 12px; font-weight:600;">✓</td>
+          <td style="padding:9px 12px;">Medium</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#3730a3;">Best overall balance; recommended baseline</td>
+        </tr>
+        <tr><td colspan="6" style="padding:10px 12px 4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#94a3b8;">Pillar-level pulse effects</td></tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 12px; font-weight:600;">K — Shadow breathe</td>
+          <td style="padding:9px 12px;">Pillar only</td><td style="padding:9px 12px;">—</td>
+          <td style="padding:9px 12px;">Low</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Subtlest motion; uses pillar's own color</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9; background:#fafafa;">
+          <td style="padding:9px 12px; font-weight:600;">L — Sonar ring</td>
+          <td style="padding:9px 12px;">Pillar only</td><td style="padding:9px 12px;">—</td>
+          <td style="padding:9px 12px;">Medium</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Clear "launch" signal; strong on first load</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 12px; font-weight:600;">M — Border pulse</td>
+          <td style="padding:9px 12px;">Pillar only</td><td style="padding:9px 12px;">—</td>
+          <td style="padding:9px 12px;">Low–Med</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Crisp white stroke blink; precise feeling</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9; background:#fafafa;">
+          <td style="padding:9px 12px; font-weight:600;">N — Shimmer sweep</td>
+          <td style="padding:9px 12px;">Pillar only</td><td style="padding:9px 12px;">—</td>
+          <td style="padding:9px 12px;">High</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Most polished; most app-like; stylized</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 12px; font-weight:600;">P — Double ring</td>
+          <td style="padding:9px 12px;">Pillar only</td><td style="padding:9px 12px;">—</td>
+          <td style="padding:9px 12px;">High</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#64748b;">Most dramatic; ripple cascade effect</td>
+        </tr>
+        <tr style="background:#eef2ff;">
+          <td style="padding:9px 12px; font-weight:700; color:#3730a3;">Q — K + J combined ★</td>
+          <td style="padding:9px 12px; font-weight:600;">Both</td><td style="padding:9px 12px; font-weight:600;">✓</td>
+          <td style="padding:9px 12px;">Low + Med</td><td style="padding:9px 12px;">No</td>
+          <td style="padding:9px 12px; color:#3730a3;">Two-tier signal: pillar breathes, items carry chips</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>
