@@ -44,6 +44,27 @@
     .connector-center { display: flex; justify-content: center; width: 100%; }
     .connector-up { width: 2px; height: 16px; background: #c5c9d6; }
 
+    /* ── Brand position statement ── */
+    .brand-statement {
+      text-align: center; max-width: 720px;
+      font-size: 15px; font-weight: 500; color: #374151;
+      line-height: 1.65; font-style: italic;
+    }
+    .brand-statement strong { font-style: normal; font-weight: 700; color: #1a1a2e; }
+
+    /* ── Opportunity header ── */
+    .opp-header {
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+      background: var(--opp-bg); border-left: 3px solid var(--accent);
+    }
+    .opp-label {
+      font-size: 8.5px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 3px;
+    }
+    .opp-title {
+      font-size: 13px; font-weight: 700; color: #1a1a2e; line-height: 1.3;
+    }
+
     /* ── Home screen ── */
     .home-block {
       background: #1a1a2e; color: #fff; border-radius: 14px;
@@ -332,6 +353,11 @@
     <div class="connector-down"></div>
     -->
 
+    <!-- Brand position statement -->
+    <p class="brand-statement">For passionate youth athletes, their families, and their fans, <strong>GameChanger</strong> is the youth sports app that ensures every meaningful moment is <strong>seen, captured, and celebrated.</strong></p>
+
+    <div class="connector-down"></div>
+
     <!-- Home Screen -->
     <div class="home-block" style="width:auto;">
       <div class="hb-label">Primary Entry Point — All Users</div>
@@ -493,7 +519,11 @@
       <div class="investments-grid">
 
         <!-- Organize investments -->
-        <div class="acc-organize">
+        <div class="acc-organize" style="--opp-bg:#eff6ff;">
+          <div class="opp-header">
+            <div class="opp-label">Organize Opportunity</div>
+            <div class="opp-title">Adoption via Clubs</div>
+          </div>
           <div class="accordion-stack">
 
             <div class="accordion-item">
@@ -512,7 +542,11 @@
         </div>
 
         <!-- Connect Live investments -->
-        <div class="acc-connect">
+        <div class="acc-connect" style="--opp-bg:#fff1f2;">
+          <div class="opp-header">
+            <div class="opp-label">Connect Live Opportunity</div>
+            <div class="opp-title">Easier Coverage</div>
+          </div>
           <div class="accordion-stack">
 
             <div class="accordion-item">
@@ -560,7 +594,11 @@
         </div>
 
         <!-- Celebrate investments -->
-        <div class="acc-celebrate">
+        <div class="acc-celebrate" style="--opp-bg:#f5f3ff;">
+          <div class="opp-header">
+            <div class="opp-label">Celebrate Opportunity</div>
+            <div class="opp-title">Amplify Existing Content</div>
+          </div>
           <div class="accordion-stack">
 
             <div class="accordion-item">
@@ -581,7 +619,11 @@
         </div>
 
         <!-- Grow investments -->
-        <div class="acc-grow">
+        <div class="acc-grow" style="--opp-bg:#fffbeb;">
+          <div class="opp-header">
+            <div class="opp-label">Grow Opportunity</div>
+            <div class="opp-title">The Athlete Experience</div>
+          </div>
           <div class="accordion-stack">
 
             <div class="accordion-item">
